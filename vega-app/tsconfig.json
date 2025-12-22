@@ -2,15 +2,25 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
+
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
-    "strict": true,
-    "noEmit": true,
-    "isolatedModules": true,
 
-    "rootDir": "src",
-    "baseUrl": "src"
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    "baseUrl": "src",
+    "paths": {
+      "app/*": ["app/*"],
+      "components/*": ["components/*"],
+      "features/*": ["features/*"],
+      "styles/*": ["styles/*"],
+      "lib/*": ["lib/*"]
+    },
+
+    "types": ["react", "react-dom"]
   },
   "include": ["src"]
 }
