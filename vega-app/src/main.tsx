@@ -1,14 +1,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import AppLayout from './app/layout'
-import Dashboard from './features/dashboard/Dashboard'
+import { BrowserRouter } from 'react-router-dom'
+import AppLayout from 'app/layout'
+import AppRoutes from 'app/routes/AppRoutes'
 import './index.css'
 import './styles/theme.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AppLayout>
-      <Dashboard />
-    </AppLayout>
+    <BrowserRouter>
+      <AppLayout>
+        <AppRoutes />
+      </AppLayout>
+    </BrowserRouter>
   </React.StrictMode>
 )

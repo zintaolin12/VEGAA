@@ -1,17 +1,25 @@
-import { LayoutDashboard, Wallet, ArrowLeftRight, User } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Wallet,
+  ArrowLeftRight,
+  Coins,
+  User,
+} from 'lucide-react'
 
 const items = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Wallet', icon: Wallet },
   { label: 'Swap', icon: ArrowLeftRight },
+  { label: 'Earn', icon: Coins },
   { label: 'Profile', icon: User },
 ]
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-[var(--vega-blue-dark)] text-white min-h-screen p-6">
-      <h1 className="text-2xl font-bold mb-10">VEGA</h1>
-      <nav className="space-y-4">
+    <aside className="w-64 bg-[var(--vega-blue-dark)] text-white min-h-screen flex flex-col">
+      <div className="p-6 text-2xl font-bold">VEGA</div>
+
+      <nav className="flex-1 px-4 space-y-2">
         {items.map(({ label, icon: Icon }) => (
           <div
             key={label}
@@ -22,6 +30,10 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      <div className="p-4 text-xs text-blue-200">
+        Network: Polygon  
+      </div>
     </aside>
   )
 }
