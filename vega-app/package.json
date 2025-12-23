@@ -10,16 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.10",
     "@supabase/supabase-js": "^2.89.0",
     "clsx": "^2.1.1",
     "ethers": "^6.16.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-router-dom": "^7.11.0",
-    "viem": "^2.43.3",
-    "wagmi": "^3.1.0"
+    "recharts": "^3.6.0",
+    "viem": "^2.7.15",
+    "wagmi": "^2.12.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

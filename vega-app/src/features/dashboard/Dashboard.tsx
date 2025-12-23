@@ -1,5 +1,10 @@
 import Card from 'components/ui/Card'
 import Button from 'components/ui/Button'
+import PortfolioChart from './PortfolioChart'
+
+<Card title="Portfolio Performance">
+  <PortfolioChart />
+</Card>
 
 export default function Dashboard() {
   return (

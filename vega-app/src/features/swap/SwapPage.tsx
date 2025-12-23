@@ -1,43 +1,32 @@
 import Card from 'components/ui/Card'
 import Button from 'components/ui/Button'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { getQuote } from 'lib/swap'
 
 export default function SwapPage() {
+  const [quote, setQuote] = useState<any>(null)
+
+  async function handleQuote() {
+    const q = await getQuote('MOB', 'GVS', '100')
+    setQuote(q)
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-md mx-auto"
-    >
+    <div className="max-w-md mx-auto">
       <Card title="Swap Tokens">
-        <div className="space-y-4">
+        <input className="w-full border p-3 mb-3" placeholder="Amount" />
 
-          <SwapInput label="From" token="MOB" />
-          <SwapInput label="To" token="GVS" />
+        <Button onClick={handleQuote} className="w-full">
+          Get Quote
+        </Button>
 
-          <Button className="w-full">Swap</Button>
-
-          <p className="text-xs text-gray-500 text-center">
-            Best rate via VEGA Aggregator
-          </p>
-
-        </div>
+        {quote && (
+          <div className="mt-4 text-sm">
+            <p>Rate: {quote.rate}</p>
+            <p>Gas: {quote.estimatedGas}</p>
+          </div>
+        )}
       </Card>
-    </motion.div>
-  )
-}
-
-function SwapInput({ label, token }: { label: string; token: string }) {
-  return (
-    <div>
-      <label className="text-sm text-gray-500">{label}</label>
-      <div className="flex items-center border rounded-lg p-3 mt-1">
-        <input
-          className="flex-1 outline-none"
-          placeholder="0.0"
-        />
-        <span className="font-semibold">{token}</span>
-      </div>
     </div>
   )
 }
