@@ -1,20 +1,22 @@
 import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
 
 export default function EarnPage() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Stake token="Mobcoin" apy="18%" />
-      <Stake token="Gverse" apy="25%" />
+    <div className="pt-20 pb-28 space-y-4 overflow-y-auto">
+      <Card title="Staking Pools">
+        <Pool name="USDT" apy="6.47%" />
+        <Pool name="ETH" apy="4.12%" />
+        <Pool name="BNB" apy="5.01%" />
+      </Card>
     </div>
   )
 }
 
-function Stake({ token, apy }: any) {
+function Pool({ name, apy }: any) {
   return (
-    <Card title={`${token} Staking`}>
-      <p className="text-sm mb-2">APY: <b>{apy}</b></p>
-      <Button full>Stake</Button>
-    </Card>
+    <div className="flex justify-between py-2">
+      <span>{name}</span>
+      <span className="text-blue-500">{apy}</span>
+    </div>
   )
 }
