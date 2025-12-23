@@ -1,93 +1,57 @@
 import Card from 'components/ui/Card'
-import Button from 'components/ui/Button'
 import PortfolioChart from './PortfolioChart'
-
-<Card title="Portfolio Performance">
-  <PortfolioChart />
-</Card>
 
 export default function Dashboard() {
   return (
-    <div className="space-y-8">
-
-      {/* ===== METRICS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Metric title="Total Balance" value="₦1,250,000" />
-        <Metric title="24h PnL" value="+₦42,300" positive />
-        <Metric title="Mobcoin" value="120,000 MOB" />
-        <Metric title="Gverse" value="45,300 GVS" />
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Stat title="Total Balance" value="₦1,250,000" />
+        <Stat title="24h PnL" value="+₦45,200" positive />
+        <Stat title="Mobcoin" value="12,450 MOB" />
+        <Stat title="Gverse" value="3,120 GVS" />
       </div>
 
-      {/* ===== QUICK ACTIONS ===== */}
-      <Card title="Quick Actions">
-        <div className="flex flex-wrap gap-4">
-          <Button>Swap Tokens</Button>
-          <Button variant="secondary">Send</Button>
-          <Button variant="secondary">Earn</Button>
-        </div>
-      </Card>
+      {/* Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card title="Portfolio Performance">
+          <PortfolioChart />
+        </Card>
 
-      {/* ===== TOKEN BALANCES ===== */}
-      <Card title="Your Assets">
-        <div className="divide-y">
-          <AssetRow name="Mobcoin (MOB)" amount="120,000" value="₦720,000" />
-          <AssetRow name="Gverse (GVS)" amount="45,300" value="₦380,000" />
-          <AssetRow name="USDT" amount="950" value="₦150,000" />
-        </div>
-      </Card>
+        <Card title="Allocation">
+          <ul className="text-sm space-y-2">
+            <li>Mobcoin — 62%</li>
+            <li>Gverse — 25%</li>
+            <li>USDT — 13%</li>
+          </ul>
+        </Card>
+      </div>
 
-      {/* ===== ACTIVITY ===== */}
-      <Card title="Recent Activity">
-        <ul className="space-y-3 text-sm">
-          <li>✔ Swapped MOB → USDT</li>
-          <li>✔ Received 2,000 GVS</li>
-          <li>✔ Wallet connected</li>
-        </ul>
-      </Card>
-
+      {/* Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Action label="Swap Tokens" />
+        <Action label="Stake Assets" />
+        <Action label="Send Crypto" />
+      </div>
     </div>
   )
 }
 
-/* ===== SUB COMPONENTS ===== */
-
-function Metric({
-  title,
-  value,
-  positive,
-}: {
-  title: string
-  value: string
-  positive?: boolean
-}) {
+function Stat({ title, value, positive }: any) {
   return (
-    <div className="rounded-xl bg-white p-6 shadow">
-      <p className="text-sm text-gray-500">{title}</p>
-      <p
-        className={`text-2xl font-bold ${
-          positive ? 'text-green-600' : 'text-[var(--vega-blue)]'
-        }`}
-      >
+    <div className="bg-white p-4 rounded-xl shadow">
+      <p className="text-xs text-gray-500">{title}</p>
+      <p className={`text-lg font-bold ${positive ? 'text-green-600' : ''}`}>
         {value}
       </p>
     </div>
   )
 }
 
-function AssetRow({
-  name,
-  amount,
-  value,
-}: {
-  name: string
-  amount: string
-  value: string
-}) {
+function Action({ label }: { label: string }) {
   return (
-    <div className="flex justify-between py-3 text-sm">
-      <span>{name}</span>
-      <span>{amount}</span>
-      <span className="font-medium">{value}</span>
+    <div className="bg-white p-6 rounded-xl shadow text-center font-medium hover:bg-blue-50 cursor-pointer">
+      {label}
     </div>
   )
 }

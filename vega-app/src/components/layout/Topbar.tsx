@@ -1,26 +1,22 @@
-import Button from 'components/ui/Button'
+import { ReactNode } from 'react'
+import Sidebar from 'components/layout/Sidebar'
+import Topbar from 'components/layout/Topbar'
+import MobileNav from 'components/layout/MobileNav'
 
-export default function Topbar() {
+export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <header className="h-16 bg-white border-b flex items-center justify-between px-6">
-      <div>
-        <p className="text-xs text-gray-500">Total Balance</p>
-        <p className="text-lg font-bold text-[var(--vega-blue)]">
-          ₦1,250,000
-        </p>
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+
+      <div className="flex flex-col flex-1">
+        <Topbar />
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
+          {children}
+        </main>
+
+        <MobileNav />
       </div>
-
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-gray-600">Polygon</span>
-
-        <Button>
-          Connect Wallet
-        </Button>
-
-        <div className="w-9 h-9 rounded-full bg-[var(--vega-blue)] text-white flex items-center justify-center font-semibold">
-          A
-        </div>
-      </div>
-    </header>
+    </div>
   )
 }

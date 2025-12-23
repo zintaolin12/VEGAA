@@ -1,39 +1,35 @@
-import {
-  LayoutDashboard,
-  Wallet,
-  ArrowLeftRight,
-  Coins,
-  User,
-} from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { LayoutDashboard, Repeat, Coins, User } from 'lucide-react'
 
-const items = [
-  { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Wallet', icon: Wallet },
-  { label: 'Swap', icon: ArrowLeftRight },
-  { label: 'Earn', icon: Coins },
-  { label: 'Profile', icon: User },
+const nav = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/swap', label: 'Swap', icon: Repeat },
+  { to: '/earn', label: 'Earn', icon: Coins },
+  { to: '/profile', label: 'Profile', icon: User },
 ]
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-[var(--vega-blue-dark)] text-white min-h-screen flex flex-col">
-      <div className="p-6 text-2xl font-bold">VEGA</div>
-
-      <nav className="flex-1 px-4 space-y-2">
-        {items.map(({ label, icon: Icon }) => (
-          <div
-            key={label}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-800 cursor-pointer"
+    <aside className="hidden md:block w-64 bg-white border-r">
+      <div className="p-6 font-bold text-xl text-blue-600">VEGA</div>
+      <nav className="px-4 space-y-2">
+        {nav.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg ${
+                isActive
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`
+            }
           >
             <Icon size={18} />
-            <span>{label}</span>
-          </div>
+            {label}
+          </NavLink>
         ))}
       </nav>
-
-      <div className="p-4 text-xs text-blue-200">
-        Network: Polygon  
-      </div>
     </aside>
   )
 }
