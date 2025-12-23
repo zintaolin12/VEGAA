@@ -1,21 +1,30 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Repeat, Coins, Wallet } from 'lucide-react'
+import { Home, BarChart2, Repeat, Wallet } from 'lucide-react'
+
+const tabs = [
+  { to: '/', icon: Home, label: 'Home' },
+  { to: '/markets', icon: BarChart2, label: 'Markets' },
+  { to: '/swap', icon: Repeat, label: 'Trade' },
+  { to: '/wallet', icon: Wallet, label: 'Assets' },
+]
 
 export default function MobileNav() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t flex justify-around p-2">
-      <Tab to="/" icon={<Home size={20} />} />
-      <Tab to="/swap" icon={<Repeat size={20} />} />
-      <Tab to="/earn" icon={<Coins size={20} />} />
-      <Tab to="/wallet" icon={<Wallet size={20} />} />
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-bgDark border-t border-gray-200 dark:border-gray-800 flex justify-around py-2">
+      {tabs.map(({ to, icon: Icon, label }) => (
+        <NavLink
+          key={to}
+          to={to}
+          className={({ isActive }) =>
+            `flex flex-col items-center text-xs ${
+              isActive ? 'text-accent' : 'opacity-60'
+            }`
+          }
+        >
+          <Icon size={20} />
+          {label}
+        </NavLink>
+      ))}
     </nav>
-  )
-}
-
-function Tab({ to, icon }: any) {
-  return (
-    <NavLink to={to} className="p-2 text-gray-500">
-      {icon}
-    </NavLink>
   )
 }

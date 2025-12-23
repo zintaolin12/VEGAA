@@ -1,26 +1,27 @@
-import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
+import { useState } from 'react'
 
 export default function SwapPage() {
-  return (
-    <div className="max-w-md mx-auto">
-      <Card title="Swap">
-        <Input label="From" value="MOB" />
-        <Input label="To" value="USDT" />
-        <Button full>Swap</Button>
-      </Card>
-    </div>
-  )
-}
+  const [from, setFrom] = useState('')
+  const rate = 1.0
 
-function Input({ label, value }: any) {
   return (
-    <div className="mb-4">
-      <label className="text-xs text-gray-400">{label}</label>
-      <div className="flex justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded">
-        <input className="bg-transparent outline-none" placeholder="0.0" />
-        <span className="font-bold">{value}</span>
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold">Swap</h2>
+
+      <input
+        value={from}
+        onChange={(e) => setFrom(e.target.value)}
+        placeholder="Amount"
+        className="w-full p-3 rounded bg-gray-200 dark:bg-cardDark"
+      />
+
+      <div className="text-sm opacity-70">
+        You receive: {(Number(from) * rate || 0).toFixed(2)} USDT
       </div>
+
+      <button className="w-full bg-accent text-black py-3 rounded font-semibold">
+        Swap
+      </button>
     </div>
   )
 }

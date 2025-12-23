@@ -1,58 +1,39 @@
 import Card from '../../components/ui/Card'
-import PortfolioChart from './PortfolioChart'
+import MiniChart from './MiniChart'
 
 export default function Dashboard() {
   return (
-    <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPI label="Total Balance" value="$12,420.22" />
-        <KPI label="24h PnL" value="+$412.40" green />
-        <KPI label="Mobcoin" value="14,200 MOB" />
-        <KPI label="Gverse" value="3,890 GVS" />
+    <div className="space-y-4">
+      <Card>
+        <p className="text-xs opacity-60">Est. Total Value (USD)</p>
+        <p className="text-3xl font-bold">$1.10</p>
+        <p className="text-xs opacity-50">Today's PNL $0.00 (0.00%)</p>
+        <button className="mt-3 bg-accent text-black px-4 py-2 rounded font-semibold">
+          Add Funds
+        </button>
+      </Card>
+
+      <Card>
+        <p className="font-semibold">Earn</p>
+        <p className="text-sm opacity-70">Earn up to 6.47% APR with USDT</p>
+        <button className="mt-2 bg-accent text-black px-3 py-1 rounded">
+          Subscribe
+        </button>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <p className="text-sm">BNB</p>
+          <p className="text-lg font-bold">$849.93</p>
+          <MiniChart />
+        </Card>
+
+        <Card>
+          <p className="text-sm">USDT/USD</p>
+          <p className="text-lg font-bold">$1.00</p>
+          <span className="text-xs text-green-500">BUY</span>
+        </Card>
       </div>
-
-      {/* Charts */}
-      <Card title="Portfolio Overview">
-        <PortfolioChart />
-      </Card>
-
-      {/* Markets */}
-      <Card title="Top Markets">
-        <table className="w-full text-sm">
-          <thead className="text-gray-400">
-            <tr>
-              <th align="left">Asset</th>
-              <th align="right">Price</th>
-              <th align="right">24h</th>
-            </tr>
-          </thead>
-          <tbody>
-            <Row name="BTC" price="$42,300" change="+2.1%" />
-            <Row name="ETH" price="$2,340" change="+1.4%" />
-            <Row name="MOB" price="$0.12" change="+8.9%" />
-          </tbody>
-        </table>
-      </Card>
     </div>
-  )
-}
-
-function KPI({ label, value, green }: any) {
-  return (
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow">
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className={`text-lg font-bold ${green ? 'text-green-500' : ''}`}>{value}</p>
-    </div>
-  )
-}
-
-function Row({ name, price, change }: any) {
-  return (
-    <tr className="border-t">
-      <td>{name}</td>
-      <td align="right">{price}</td>
-      <td align="right" className="text-green-500">{change}</td>
-    </tr>
   )
 }
