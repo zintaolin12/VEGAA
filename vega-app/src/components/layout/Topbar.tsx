@@ -1,22 +1,10 @@
-import { ReactNode } from 'react'
-import Sidebar from 'components/layout/Sidebar'
-import Topbar from 'components/layout/Topbar'
-import MobileNav from 'components/layout/MobileNav'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
-export default function AppLayout({ children }: { children: ReactNode }) {
+export default function Topbar() {
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-
-      <div className="flex flex-col flex-1">
-        <Topbar />
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
-          {children}
-        </main>
-
-        <MobileNav />
-      </div>
-    </div>
+    <header className="h-14 md:h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+      <div className="font-bold text-blue-600">VEGA</div>
+      <ConnectButton chainStatus="icon" showBalance={false} />
+    </header>
   )
 }
