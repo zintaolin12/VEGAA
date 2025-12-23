@@ -1,51 +1,20 @@
-import Card from 'components/ui/Card'
-import Button from 'components/ui/Button'
-import { motion } from 'framer-motion'
+import Card from '../../components/ui/Card'
+import Button from '../../components/ui/Button'
 
 export default function EarnPage() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="grid grid-cols-1 md:grid-cols-2 gap-6"
-    >
-      <EarnCard
-        title="Stake Mobcoin (MOB)"
-        description="Lock your MOB tokens and earn passive rewards."
-        apy="18% APY"
-      />
-
-      <EarnCard
-        title="Mine Gverse (GVS)"
-        description="Participate in mining & competitive rewards."
-        apy="Variable"
-      />
-    </motion.div>
+    <div className="grid gap-4 md:grid-cols-2">
+      <Stake token="Mobcoin" apy="18%" />
+      <Stake token="Gverse" apy="25%" />
+    </div>
   )
 }
 
-function EarnCard({
-  title,
-  description,
-  apy,
-}: {
-  title: string
-  description: string
-  apy: string
-}) {
+function Stake({ token, apy }: any) {
   return (
-    <Card title={title}>
-      <p className="text-sm text-gray-600 mb-2">
-        {description}
-      </p>
-
-      <p className="text-xl font-bold mb-4">
-        {apy}
-      </p>
-
-      <Button>
-        Start Earning
-      </Button>
+    <Card title={`${token} Staking`}>
+      <p className="text-sm mb-2">APY: <b>{apy}</b></p>
+      <Button full>Stake</Button>
     </Card>
   )
 }

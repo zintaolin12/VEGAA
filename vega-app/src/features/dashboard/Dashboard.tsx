@@ -1,4 +1,4 @@
-import Card from 'components/ui/Card'
+import Card from '../../components/ui/Card'
 import PortfolioChart from './PortfolioChart'
 
 export default function Dashboard() {
@@ -6,52 +6,53 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat title="Total Balance" value="₦1,250,000" />
-        <Stat title="24h PnL" value="+₦45,200" positive />
-        <Stat title="Mobcoin" value="12,450 MOB" />
-        <Stat title="Gverse" value="3,120 GVS" />
+        <KPI label="Total Balance" value="$12,420.22" />
+        <KPI label="24h PnL" value="+$412.40" green />
+        <KPI label="Mobcoin" value="14,200 MOB" />
+        <KPI label="Gverse" value="3,890 GVS" />
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card title="Portfolio Performance">
-          <PortfolioChart />
-        </Card>
+      <Card title="Portfolio Overview">
+        <PortfolioChart />
+      </Card>
 
-        <Card title="Allocation">
-          <ul className="text-sm space-y-2">
-            <li>Mobcoin — 62%</li>
-            <li>Gverse — 25%</li>
-            <li>USDT — 13%</li>
-          </ul>
-        </Card>
-      </div>
-
-      {/* Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Action label="Swap Tokens" />
-        <Action label="Stake Assets" />
-        <Action label="Send Crypto" />
-      </div>
+      {/* Markets */}
+      <Card title="Top Markets">
+        <table className="w-full text-sm">
+          <thead className="text-gray-400">
+            <tr>
+              <th align="left">Asset</th>
+              <th align="right">Price</th>
+              <th align="right">24h</th>
+            </tr>
+          </thead>
+          <tbody>
+            <Row name="BTC" price="$42,300" change="+2.1%" />
+            <Row name="ETH" price="$2,340" change="+1.4%" />
+            <Row name="MOB" price="$0.12" change="+8.9%" />
+          </tbody>
+        </table>
+      </Card>
     </div>
   )
 }
 
-function Stat({ title, value, positive }: any) {
+function KPI({ label, value, green }: any) {
   return (
-    <div className="bg-white p-4 rounded-xl shadow">
-      <p className="text-xs text-gray-500">{title}</p>
-      <p className={`text-lg font-bold ${positive ? 'text-green-600' : ''}`}>
-        {value}
-      </p>
+    <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow">
+      <p className="text-xs text-gray-400">{label}</p>
+      <p className={`text-lg font-bold ${green ? 'text-green-500' : ''}`}>{value}</p>
     </div>
   )
 }
 
-function Action({ label }: { label: string }) {
+function Row({ name, price, change }: any) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow text-center font-medium hover:bg-blue-50 cursor-pointer">
-      {label}
-    </div>
+    <tr className="border-t">
+      <td>{name}</td>
+      <td align="right">{price}</td>
+      <td align="right" className="text-green-500">{change}</td>
+    </tr>
   )
 }

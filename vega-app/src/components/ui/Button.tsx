@@ -1,26 +1,32 @@
-import { ButtonHTMLAttributes } from 'react'
-import clsx from 'clsx'
+import React from 'react'
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  full?: boolean
   variant?: 'primary' | 'secondary'
 }
 
 export default function Button({
+  children,
+  full = false,
   variant = 'primary',
-  className,
+  className = '',
   ...props
 }: ButtonProps) {
   return (
     <button
-      className={clsx(
-        'px-5 py-2.5 rounded-lg font-medium transition disabled:opacity-50',
-        variant === 'primary' &&
-          'bg-[var(--vega-blue)] text-white hover:bg-blue-700',
-        variant === 'secondary' &&
-          'bg-[var(--vega-blue-light)] text-[var(--vega-blue-dark)] hover:bg-blue-100',
-        className
-      )}
       {...props}
-    />
+      className={`
+        ${full ? 'w-full' : ''}
+        px-4 py-2 rounded-lg font-medium transition
+        ${
+          variant === 'primary'
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+        }
+        ${className}
+      `}
+    >
+      {children}
+    </button>
   )
 }
