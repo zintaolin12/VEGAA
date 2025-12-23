@@ -1,49 +1,87 @@
-import Card from '../../components/ui/Card'
-import { useMarkets } from '../../hooks/useMarkets'
+import { useEffect, useState } from 'react'
+
+type Coin = {
+  id: string
+  name: string
+  symbol: string
+  current_price: number
+  price_change_percentage_24h: number
+  market_cap: number
+}
 
 export default function MarketsPage() {
-  const { data, loading } = useMarkets()
+  const [coins, setCoins] = useState<Coin[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchMarkets = async () => {
+      const res = await fetch(
+        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1'
+      )
+      const data = await res.json()
+      setCoins(data)
+      setLoading(false)
+    }
+
+    fetchMarkets()
+    const interval = setInterval(fetchMarkets, 15000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) {
+    return <div className="p-6">Loading markets…</div>
+  }
 
   return (
-    <div className="pt-20 pb-24">
-      <Card title="Markets">
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div className="divide-y divide-gray-800">
-            {data.map((coin) => (
-              <div
-                key={coin.id}
-                className="py-3 flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-semibold">
-                    {coin.name} ({coin.symbol.toUpperCase()})
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Vol ${coin.total_volume.toLocaleString()}
-                  </p>
-                </div>
+    <div className="p-4 md:p-6">
+      <h1 className="text-xl font-semibold mb-4 text-blue-400">Markets</h1>
 
-                <div className="text-right">
-                  <p className="font-semibold">
-                    ${coin.current_price.toLocaleString()}
-                  </p>
-                  <p
-                    className={`text-xs ${
-                      coin.price_change_percentage_24h >= 0
-                        ? 'text-green-500'
-                        : 'text-red-500'
-                    }`}
-                  >
-                    {coin.price_change_percentage_24h.toFixed(2)}%
-                  </p>
-                </div>
-              </div>
+      <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+        <table className="min-w-full text-sm">
+          <thead className="bg-[var(--panel)]">
+            <tr>
+              <th className="p-3 text-left">Asset</th>
+              <th className="p-3 text-right">Price</th>
+              <th className="p-3 text-right">24h</th>
+              <th className="p-3 text-right">Market Cap</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {coins.map((c) => (
+              <tr
+                key={c.id}
+                className="border-t border-[var(--border)] hover:bg-[#0f1b33]"
+              >
+                <td className="p-3 font-medium">
+                  {c.name}{' '}
+                  <span className="text-xs text-gray-400 uppercase">
+                    {c.symbol}
+                  </span>
+                </td>
+
+                <td className="p-3 text-right">
+                  ${c.current_price.toLocaleString()}
+                </td>
+
+                <td
+                  className={`p-3 text-right ${
+                    c.price_change_percentage_24h >= 0
+                      ? 'text-green-400'
+                      : 'text-red-400'
+                  }`}
+                >
+                  {c.price_change_percentage_24h.toFixed(2)}%
+                </td>
+
+                <td className="p-3 text-right">
+                  ${c.market_cap.toLocaleString()}
+                </td>
+              </tr>
             ))}
-          </div>
-        )}
-      </Card>
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

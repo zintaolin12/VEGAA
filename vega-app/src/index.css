@@ -3,16 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --bg: #020617;
-  --text: #e5e7eb;
+  --bg: #050b14;
+  --panel: #0b1220;
+  --border: #10203a;
+  --blue: #1e90ff;
+  --text: #c7d2fe;
 }
 
-.dark {
+html, body, #root {
   background-color: var(--bg);
   color: var(--text);
+  height: 100%;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue) transparent;
 }
