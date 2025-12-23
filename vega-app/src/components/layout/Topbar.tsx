@@ -1,25 +1,18 @@
-import { Moon, Sun } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { Link } from 'react-router-dom'
 
 export default function Topbar() {
-  const [dark, setDark] = useState(
-    document.documentElement.classList.contains('dark')
-  )
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-  }, [dark])
-
   return (
-    <header className="bg-white dark:bg-bg border-b border-gray-200 dark:border-border px-4 py-3 flex justify-between items-center">
-      <span className="font-bold text-primary">VEGA</span>
+    <header className="fixed top-0 inset-x-0 h-14 bg-black border-b border-blue-900 flex items-center px-4 justify-between z-50">
+      <Link to="/" className="text-blue-500 font-bold">VEGA</Link>
 
-      <button
-        onClick={() => setDark(!dark)}
-        className="p-2 rounded hover:bg-gray-100 dark:hover:bg-card"
-      >
-        {dark ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
+      <nav className="hidden md:flex gap-6 text-sm">
+        <Link to="/swap">Swap</Link>
+        <Link to="/earn">Earn</Link>
+        <Link to="/wallet">Wallet</Link>
+      </nav>
+
+      <ConnectButton showBalance />
     </header>
   )
 }
