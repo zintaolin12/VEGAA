@@ -1,13 +1,16 @@
+import { ReactNode } from 'react'
 import Topbar from '../components/layout/Topbar'
-import MobileNav from '../components/layout/MobileNav'
-import AppRoutes from './routes/AppRoutes'
 
-export default function AppLayout() {
+export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-bg text-text min-h-screen">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col">
+      {/* Top Navigation */}
       <Topbar />
-      <AppRoutes />
-      <MobileNav />
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto px-2 sm:px-4">
+        {children}
+      </main>
     </div>
   )
 }
