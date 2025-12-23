@@ -1,20 +1,16 @@
 import { ReactNode } from 'react'
-import clsx from 'clsx'
 
-type CardProps = {
-  title?: string
+export default function Card({
+  children,
+  title,
+}: {
   children: ReactNode
-  className?: string
-}
-
-export default function Card({ title, children, className }: CardProps) {
+  title?: string
+}) {
   return (
-    <div className={clsx(
-      'rounded-xl bg-white shadow-md p-6 border border-gray-100',
-      className
-    )}>
+    <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl p-4 text-gray-900 dark:text-text">
       {title && (
-        <h3 className="text-lg font-semibold text-[var(--vega-blue-dark)] mb-4">
+        <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-muted">
           {title}
         </h3>
       )}

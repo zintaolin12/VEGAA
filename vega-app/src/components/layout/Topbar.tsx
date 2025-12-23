@@ -1,27 +1,25 @@
-import { Moon, Sun, Bell, Search } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export default function Topbar() {
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(
+    document.documentElement.classList.contains('dark')
+  )
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
   }, [dark])
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-bgDark border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span className="text-lg font-bold text-accent">VEGA</span>
-        <span className="text-sm opacity-70">Exchange</span>
-      </div>
+    <header className="bg-white dark:bg-bg border-b border-gray-200 dark:border-border px-4 py-3 flex justify-between items-center">
+      <span className="font-bold text-primary">VEGA</span>
 
-      <div className="flex items-center gap-3">
-        <Search size={18} />
-        <Bell size={18} />
-        <button onClick={() => setDark(!dark)}>
-          {dark ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-      </div>
+      <button
+        onClick={() => setDark(!dark)}
+        className="p-2 rounded hover:bg-gray-100 dark:hover:bg-card"
+      >
+        {dark ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
     </header>
   )
 }
