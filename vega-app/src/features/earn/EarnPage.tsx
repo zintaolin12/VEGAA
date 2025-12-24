@@ -1,22 +1,10 @@
-import Card from '../../components/ui/Card'
-
 export default function EarnPage() {
   return (
-    <div className="pt-20 pb-28 space-y-4 overflow-y-auto">
-      <Card title="Staking Pools">
-        <Pool name="USDT" apy="6.47%" />
-        <Pool name="ETH" apy="4.12%" />
-        <Pool name="BNB" apy="5.01%" />
-      </Card>
+    <div className="bg-zinc-900 border border-blue-900 rounded-xl p-6">
+      <h2 className="text-xl font-bold text-blue-400 mb-4">Earn</h2>
+      <p className="text-gray-400">
+        Staking & mining modules will appear here.
+      </p>
     </div>
-  )
-}
-
-function Pool({ name, apy }: any) {
-  return (
-    <div className="flex justify-between py-2">
-      <span>{name}</span>
-      <span className="text-blue-500">{apy}</span>
-    </div>
-  )
+  );
 }

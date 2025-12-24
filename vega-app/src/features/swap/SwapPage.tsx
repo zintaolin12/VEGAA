@@ -1,27 +1,16 @@
-import { useState } from 'react'
-import Card from '../../components/ui/Card'
-
 export default function SwapPage() {
-  const [amount, setAmount] = useState(0)
-  const rate = 1.02
-
   return (
-    <div className="pt-16 pb-20">
-      <Card title="Swap">
-        <input
-          type="number"
-          value={amount}
-          onChange={e => setAmount(+e.target.value)}
-          className="w-full bg-transparent border border-border p-2 rounded mb-3"
-          placeholder="Amount"
-        />
-        <p className="text-sm mb-3">
-          You receive: {(amount * rate).toFixed(2)}
-        </p>
-        <button className="w-full bg-primary py-2 rounded text-white">
-          Swap
-        </button>
-      </Card>
+    <div className="max-w-md bg-zinc-900 border border-blue-900 rounded-xl p-6">
+      <h2 className="text-xl font-bold text-blue-400 mb-4">Swap</h2>
+
+      <input
+        className="w-full mb-4 bg-black border border-blue-900 rounded p-3"
+        placeholder="Amount"
+      />
+
+      <button className="w-full bg-blue-600 py-3 rounded font-semibold">
+        Swap
+      </button>
     </div>
-  )
+  );
 }

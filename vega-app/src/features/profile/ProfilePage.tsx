@@ -1,14 +1,8 @@
-import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
-
 export default function ProfilePage() {
   return (
-    <div className="max-w-2xl space-y-6">
-      <Card title="Profile">
-        <p>Username: VegaUser</p>
-        <p>KYC: Pending</p>
-      </Card>
-      <Button variant="secondary">Logout</Button>
+    <div className="bg-zinc-900 border border-blue-900 rounded-xl p-6">
+      <h2 className="text-xl font-bold text-blue-400 mb-4">Profile</h2>
+      <p className="text-gray-400">User account settings.</p>
     </div>
-  )
+  );
 }

@@ -1,87 +1,45 @@
-import { useEffect, useState } from 'react'
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 type Coin = {
-  id: string
-  name: string
-  symbol: string
-  current_price: number
-  price_change_percentage_24h: number
-  market_cap: number
-}
+  id: string;
+  name: string;
+  symbol: string;
+  price: number;
+  change: number;
+  cap: number;
+};
 
-export default function MarketsPage() {
-  const [coins, setCoins] = useState<Coin[]>([])
-  const [loading, setLoading] = useState(true)
+const MOCK: Coin[] = [
+  { id: "btc", name: "Bitcoin", symbol: "BTC", price: 43210, change: 2.3, cap: 850 },
+  { id: "eth", name: "Ethereum", symbol: "ETH", price: 2310, change: -1.2, cap: 320 },
+];
 
-  useEffect(() => {
-    const fetchMarkets = async () => {
-      const res = await fetch(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1'
-      )
-      const data = await res.json()
-      setCoins(data)
-      setLoading(false)
-    }
-
-    fetchMarkets()
-    const interval = setInterval(fetchMarkets, 15000)
-    return () => clearInterval(interval)
-  }, [])
-
-  if (loading) {
-    return <div className="p-6">Loading markets…</div>
-  }
-
+export default function MarketPage() {
   return (
-    <div className="p-4 md:p-6">
-      <h1 className="text-xl font-semibold mb-4 text-blue-400">Markets</h1>
-
-      <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[var(--panel)]">
-            <tr>
-              <th className="p-3 text-left">Asset</th>
-              <th className="p-3 text-right">Price</th>
-              <th className="p-3 text-right">24h</th>
-              <th className="p-3 text-right">Market Cap</th>
+    <div className="bg-zinc-900 border border-blue-900 rounded-xl overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-black text-blue-400">
+          <tr>
+            <th className="p-4 text-left">Asset</th>
+            <th className="p-4 text-right">Price</th>
+            <th className="p-4 text-right">24h</th>
+            <th className="p-4 text-right">Market Cap</th>
+          </tr>
+        </thead>
+        <tbody>
+          {MOCK.map((c) => (
+            <tr key={c.id} className="border-t border-blue-900">
+              <td className="p-4">{c.name}</td>
+              <td className="p-4 text-right">${c.price.toLocaleString()}</td>
+              <td className={`p-4 text-right ${c.change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {c.change >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                {c.change}%
+              </td>
+              <td className="p-4 text-right">${c.cap}B</td>
             </tr>
-          </thead>
-
-          <tbody>
-            {coins.map((c) => (
-              <tr
-                key={c.id}
-                className="border-t border-[var(--border)] hover:bg-[#0f1b33]"
-              >
-                <td className="p-3 font-medium">
-                  {c.name}{' '}
-                  <span className="text-xs text-gray-400 uppercase">
-                    {c.symbol}
-                  </span>
-                </td>
-
-                <td className="p-3 text-right">
-                  ${c.current_price.toLocaleString()}
-                </td>
-
-                <td
-                  className={`p-3 text-right ${
-                    c.price_change_percentage_24h >= 0
-                      ? 'text-green-400'
-                      : 'text-red-400'
-                  }`}
-                >
-                  {c.price_change_percentage_24h.toFixed(2)}%
-                </td>
-
-                <td className="p-3 text-right">
-                  ${c.market_cap.toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
-  )
+  );
 }
