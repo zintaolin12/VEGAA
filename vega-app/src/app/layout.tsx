@@ -1,17 +1,20 @@
-import { PropsWithChildren } from 'react'
-import Topbar from '../components/layout/Topbar'
-import MobileNav from '../components/layout/MobileNav'
+import { Outlet } from "react-router-dom";
+import MobileNav from "../components/layout/MobileNav";
+import Topbar from "../components/layout/Topbar";
 
-export default function AppLayout({ children }: PropsWithChildren) {
+export default function Layout() {
   return (
-    <div className="min-h-screen bg-[#050b14] text-blue-100 flex flex-col">
+    <div className="min-h-screen bg-[#050b17] text-white overflow-x-hidden">
+      {/* Top Navigation */}
       <Topbar />
 
-      <main className="flex-1 overflow-y-auto px-3 pb-24">
-        {children}
+      {/* Main content */}
+      <main className="px-3 md:px-6 pb-24 pt-4">
+        <Outlet />
       </main>
 
+      {/* Mobile Navigation */}
       <MobileNav />
     </div>
-  )
+  );
 }
