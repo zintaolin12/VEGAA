@@ -1,12 +1,21 @@
-export default function MiniChart() {
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+
+export default function MiniChart({ prices }: { prices: number[] }) {
+  const data = prices.slice(-20).map((v, i) => ({ i, v }));
+
   return (
-    <svg viewBox="0 0 100 30" className="w-full h-8">
-      <polyline
-        fill="none"
-        stroke="#2563eb"
-        strokeWidth="2"
-        points="0,20 10,18 20,22 30,15 40,17 50,10 60,12 70,8 80,10 90,6"
-      />
-    </svg>
-  )
+    <div className="h-10 w-24">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <Line
+            type="monotone"
+            dataKey="v"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }

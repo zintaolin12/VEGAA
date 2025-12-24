@@ -1,16 +1,18 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import AppLayout from './app/layout'
-import AppRoutes from './app/routes/AppRoutes'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { wagmiConfig } from "./lib/wagmi";
+import VEGAPlatform from "./VEGAPlatform";
+import "@rainbow-me/rainbowkit/styles.css";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AppLayout>
-        <AppRoutes />
-      </AppLayout>
-    </BrowserRouter>
+    <WagmiProvider config={wagmiConfig}>
+      <RainbowKitProvider>
+        <VEGAPlatform />
+      </RainbowKitProvider>
+    </WagmiProvider>
   </React.StrictMode>
-)
+);
