@@ -1,43 +1,63 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { useAccount, useBalance } from "wagmi";
 import { useMarkets } from "../../hooks/useMarkets";
 import MiniSparkline from "../../components/charts/MiniSparkline";
 
 export default function Dashboard() {
-  const { data, isLoading, error } = useMarkets();
+  const { data, isLoading } = useMarkets();
+
+  const { address, isConnected } = useAccount();
+
+  // ✅ CORRECT wagmi usage (NO enabled flag)
+  const { data: ethBalance } = useBalance(
+    address
+      ? { address }
+      : undefined
+  );
 
   if (isLoading) {
     return <div className="text-blue-400">Loading markets…</div>;
   }
 
-  if (error) {
-    return <div className="text-red-400">{error}</div>;
-  }
+  const top = data!.slice(0, 6);
 
-  const top = data.slice(0, 6);
+  const ethPrice =
+    data?.find(c => c.id === "ethereum")?.current_price ?? 0;
+
+  const ethValueUSD =
+    ethBalance && ethPrice
+      ? Number(ethBalance.formatted) * ethPrice
+      : 0;
 
   return (
     <div className="space-y-6">
       {/* Header stats */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          ["Total Balance", "$12,450"],
-          ["24h P&L", "+$512"],
-          ["Assets", "8"],
-          ["Market Cap", "$2.1T"],
-        ].map(([title, value]) => (
-          <div
-            key={title}
-            className="rounded-lg border border-blue-900/30 bg-[#0b1220] p-4"
-          >
-            <p className="text-xs text-blue-400">{title}</p>
-            <p className="text-lg font-semibold text-white">{value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat
+          title="Wallet Balance"
+          value={
+            isConnected
+              ? `$${ethValueUSD.toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}`
+              : "Not connected"
+          }
+        />
+        <Stat
+          title="ETH Balance"
+          value={
+            ethBalance
+              ? `${Number(ethBalance.formatted).toFixed(4)} ETH`
+              : "—"
+          }
+        />
+        <Stat title="Assets" value={isConnected ? "1" : "0"} />
+        <Stat title="Market Cap" value="$2.1T" />
       </div>
 
-      {/* Top markets */}
-      <div className="overflow-hidden rounded-lg border border-blue-900/30 bg-[#0b1220]">
-        <div className="border-b border-blue-900/30 px-4 py-3 text-sm text-blue-400">
+      {/* Top Markets */}
+      <div className="bg-[#0b1220] border border-blue-900/30 rounded">
+        <div className="p-4 border-b border-blue-900/30 text-blue-400 text-sm">
           Top Markets
         </div>
 
@@ -45,19 +65,14 @@ export default function Dashboard() {
           {top.map(c => (
             <div
               key={c.id}
-              className="grid grid-cols-3 items-center gap-2 px-3 py-3 text-sm md:grid-cols-5 md:px-4"
+              className="grid grid-cols-5 items-center px-4 py-3 text-sm"
             >
-              {/* Symbol */}
-              <div className="font-semibold text-white">
+              <div className="font-semibold">
                 {c.symbol.toUpperCase()}
               </div>
 
-              {/* Price */}
-              <div className="text-white">
-                ${c.current_price.toLocaleString()}
-              </div>
+              <div>${c.current_price.toLocaleString()}</div>
 
-              {/* Change */}
               <div
                 className={`flex items-center gap-1 ${
                   c.price_change_percentage_24h >= 0
@@ -73,22 +88,37 @@ export default function Dashboard() {
                 {c.price_change_percentage_24h.toFixed(2)}%
               </div>
 
-              {/* Market cap (desktop only) */}
-              <div className="hidden md:block text-white">
-                ${(c.market_cap / 1e9).toFixed(1)}B
-              </div>
+              <div>${(c.market_cap / 1e9).toFixed(1)}B</div>
 
-              {/* Sparkline (desktop only) */}
-              <div className="hidden md:block">
-                <MiniSparkline
-                  data={c.sparkline_in_7d?.price ?? []}
-                  positive={c.price_change_percentage_24h >= 0}
-                />
-              </div>
+              <MiniSparkline
+                data={c.sparkline_in_7d?.price || []}
+                positive={c.price_change_percentage_24h >= 0}
+              />
             </div>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ===========================
+   Small stat card
+=========================== */
+function Stat({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="bg-[#0b1220] border border-blue-900/30 p-4 rounded">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-blue-400">{title}</p>
+        <Wallet size={14} className="text-blue-500" />
+      </div>
+      <p className="text-lg font-semibold mt-1">{value}</p>
     </div>
   );
 }
