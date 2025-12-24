@@ -1,8 +1,15 @@
 export default function ProfilePage() {
   return (
-    <div className="bg-zinc-900 border border-blue-900 rounded-xl p-6">
-      <h2 className="text-xl font-bold text-blue-400 mb-4">Profile</h2>
-      <p className="text-gray-400">User account settings.</p>
+    <div className="max-w-lg space-y-4">
+      <div className="bg-[#0b1220] border border-blue-900/30 p-4 rounded">
+        <p className="text-blue-400">Account</p>
+        <p className="text-sm">Wallet connected</p>
+      </div>
+
+      <div className="bg-[#0b1220] border border-blue-900/30 p-4 rounded">
+        <p className="text-blue-400">Security</p>
+        <p className="text-sm">2FA Disabled</p>
+      </div>
     </div>
   );
 }

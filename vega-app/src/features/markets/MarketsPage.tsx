@@ -1,41 +1,51 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { useMarkets } from "../../hooks/useMarkets";
+import MiniSparkline from "../../components/charts/MiniSparkline";
 
-type Coin = {
-  id: string;
-  name: string;
-  symbol: string;
-  price: number;
-  change: number;
-  cap: number;
-};
+export default function MarketsPage() {
+  const { data, isLoading } = useMarkets();
 
-const MOCK: Coin[] = [
-  { id: "btc", name: "Bitcoin", symbol: "BTC", price: 43210, change: 2.3, cap: 850 },
-  { id: "eth", name: "Ethereum", symbol: "ETH", price: 2310, change: -1.2, cap: 320 },
-];
+  if (isLoading) return <div className="text-blue-400">Loading…</div>;
 
-export default function MarketPage() {
   return (
-    <div className="bg-zinc-900 border border-blue-900 rounded-xl overflow-hidden">
+    <div className="bg-[#0b1220] border border-blue-900/30 rounded overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-black text-blue-400">
           <tr>
-            <th className="p-4 text-left">Asset</th>
-            <th className="p-4 text-right">Price</th>
-            <th className="p-4 text-right">24h</th>
-            <th className="p-4 text-right">Market Cap</th>
+            <th className="p-3 text-left">Pair</th>
+            <th className="p-3 text-right">Price</th>
+            <th className="p-3 text-right">24h %</th>
+            <th className="p-3 text-right">Volume</th>
+            <th className="p-3 text-center">Chart</th>
           </tr>
         </thead>
         <tbody>
-          {MOCK.map((c) => (
-            <tr key={c.id} className="border-t border-blue-900">
-              <td className="p-4">{c.name}</td>
-              <td className="p-4 text-right">${c.price.toLocaleString()}</td>
-              <td className={`p-4 text-right ${c.change >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {c.change >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {c.change}%
+          {data!.map(c => (
+            <tr
+              key={c.id}
+              className="border-t border-blue-900/20 hover:bg-[#0f172a]"
+            >
+              <td className="p-3 font-medium">{c.symbol.toUpperCase()}/USD</td>
+              <td className="p-3 text-right">
+                ${c.current_price.toLocaleString()}
               </td>
-              <td className="p-4 text-right">${c.cap}B</td>
+              <td
+                className={`p-3 text-right ${
+                  c.price_change_percentage_24h >= 0
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
+                {c.price_change_percentage_24h.toFixed(2)}%
+              </td>
+              <td className="p-3 text-right">
+                ${(c.total_volume / 1e6).toFixed(1)}M
+              </td>
+              <td className="p-3">
+                <MiniSparkline
+                  data={c.sparkline_in_7d?.price || []}
+                  positive={c.price_change_percentage_24h >= 0}
+                />
+              </td>
             </tr>
           ))}
         </tbody>

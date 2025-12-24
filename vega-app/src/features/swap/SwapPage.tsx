@@ -1,16 +1,46 @@
+import { useMarkets } from "../../hooks/useMarkets";
+import { useState } from "react";
+
 export default function SwapPage() {
+  const { data } = useMarkets();
+  const [amount, setAmount] = useState("");
+
+  const pair = data?.[0];
+
+  if (!pair) return null;
+
   return (
-    <div className="max-w-md bg-zinc-900 border border-blue-900 rounded-xl p-6">
-      <h2 className="text-xl font-bold text-blue-400 mb-4">Swap</h2>
+    <div className="max-w-md mx-auto bg-[#0b1220] border border-blue-900/30 rounded p-4 space-y-4">
+      <div className="text-blue-400 font-semibold">Swap</div>
 
-      <input
-        className="w-full mb-4 bg-black border border-blue-900 rounded p-3"
-        placeholder="Amount"
-      />
+      <div>
+        <label className="text-xs text-blue-400">From (USD)</label>
+        <input
+          value={amount}
+          onChange={e => setAmount(e.target.value)}
+          className="w-full bg-black border border-blue-900/30 p-2 rounded"
+        />
+      </div>
 
-      <button className="w-full bg-blue-600 py-3 rounded font-semibold">
+      <div>
+        <label className="text-xs text-blue-400">
+          To ({pair.symbol.toUpperCase()})
+        </label>
+        <input
+          disabled
+          value={
+            amount
+              ? (Number(amount) / pair.current_price).toFixed(6)
+              : ""
+          }
+          className="w-full bg-black border border-blue-900/30 p-2 rounded"
+        />
+      </div>
+
+      <button className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded">
         Swap
       </button>
     </div>
   );
 }
+

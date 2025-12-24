@@ -1,44 +1,87 @@
-import { DollarSign, TrendingUp, Wallet, BarChart3 } from "lucide-react";
-
-type StatProps = {
-  title: string;
-  value: string;
-  subtitle?: string;
-  positive?: boolean;
-};
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { useMarkets } from "../../hooks/useMarkets";
+import MiniSparkline from "../../components/charts/MiniSparkline";
 
 export default function Dashboard() {
+  const { data, isLoading } = useMarkets();
+
+  if (isLoading) {
+    return <div className="text-blue-400">Loading markets…</div>;
+  }
+
+  if (!data || data.length === 0) {
+    return <div className="text-blue-400">No market data available</div>;
+  }
+
+  const top = data.slice(0, 6);
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Stat title="Total Balance" value="$12,450.00" subtitle="+4.12%" positive />
-        <Stat title="24h P&L" value="+$512.34" positive />
-        <Stat title="Assets" value="8" />
-        <Stat title="Market Cap" value="$2.1T" />
+      {/* Header stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          ["Total Balance", "$12,450"],
+          ["24h P&L", "+$512"],
+          ["Assets", "8"],
+          ["Market Cap", "$2.1T"],
+        ].map(([t, v]) => (
+          <div
+            key={t}
+            className="bg-[#0b1220] border border-blue-900/30 p-4 rounded"
+          >
+            <p className="text-xs text-blue-400">{t}</p>
+            <p className="text-lg font-semibold text-white">{v}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="bg-zinc-900 border border-blue-900 rounded-xl p-6">
-        <h2 className="text-xl font-semibold text-blue-400 mb-4">
-          Portfolio Overview
-        </h2>
-        <div className="text-gray-400">
-          Live balances will populate here after wallet connection.
+      {/* Market movers */}
+      <div className="bg-[#0b1220] border border-blue-900/30 rounded">
+        <div className="p-4 border-b border-blue-900/30 text-blue-400 text-sm">
+          Top Markets
+        </div>
+
+        <div className="divide-y divide-blue-900/20">
+          {top.map((c) => (
+            <div
+              key={c.id}
+              className="grid grid-cols-5 items-center px-4 py-3 text-sm"
+            >
+              <div className="font-semibold text-white">
+                {c.symbol.toUpperCase()}
+              </div>
+
+              <div className="text-white">
+                ${c.current_price.toLocaleString()}
+              </div>
+
+              <div
+                className={`flex items-center gap-1 ${
+                  c.price_change_percentage_24h >= 0
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
+                {c.price_change_percentage_24h >= 0 ? (
+                  <TrendingUp size={14} />
+                ) : (
+                  <TrendingDown size={14} />
+                )}
+                {c.price_change_percentage_24h.toFixed(2)}%
+              </div>
+
+              <div className="text-white">
+                ${(c.market_cap / 1e9).toFixed(1)}B
+              </div>
+
+              <MiniSparkline
+                data={c.sparkline_in_7d?.price ?? []}
+                positive={c.price_change_percentage_24h >= 0}
+              />
+            </div>
+          ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function Stat({ title, value, subtitle, positive }: StatProps) {
-  return (
-    <div className="bg-zinc-900 border border-blue-900 rounded-xl p-4">
-      <p className="text-sm text-blue-300">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
-      {subtitle && (
-        <p className={positive ? "text-green-400" : "text-red-400"}>
-          {subtitle}
-        </p>
-      )}
     </div>
   );
 }
