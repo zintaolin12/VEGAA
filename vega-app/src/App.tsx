@@ -1,24 +1,30 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-
+import { Routes, Route } from "react-router-dom";
 import Dashboard from "./features/dashboard/Dashboard";
 import MarketsPage from "./features/markets/MarketsPage";
+import EarnPage from "./features/earn/EarnPage";
 import SwapPage from "./features/swap/SwapPage";
-import WalletPage from "./components/wallet/WalletPage";
 import ProfilePage from "./features/profile/ProfilePage";
+import Topbar from "./components/layout/Topbar";
+import MobileNav from "./components/layout/MobileNav";
+import Walletpage from "./components/wallet/WalletPage";
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <div className="min-h-screen bg-[#020617] text-white pb-16">
+      <Topbar />
 
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/markets" element={<MarketsPage />} />
-      <Route path="/swap" element={<SwapPage />} />
-      <Route path="/wallet" element={<WalletPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
+      <main className="px-3 pt-4">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/markets" element={<MarketsPage />} />
+          <Route path="/earn" element={<EarnPage />} />
+          <Route path="/swap" element={<SwapPage />} />
+          <Route path="/wallet" element={<Walletpage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Routes>
+      </main>
 
-      {/* safety */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+      <MobileNav />
+    </div>
   );
 }
