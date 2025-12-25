@@ -1,38 +1,32 @@
-import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
-import { useAccount, useBalance } from "wagmi";
-import { useMarkets } from "../../hooks/useMarkets";
-import MiniSparkline from "../../components/charts/MiniSparkline";
+import { TrendingUp, TrendingDown, Wallet } from "lucide-react"
+import { useAccount, useBalance } from "wagmi"
+import { useMarkets } from "../../hooks/useMarkets"
+import MiniSparkline from "../../components/charts/MiniSparkline"
 import { useSyncWallet } from "../../hooks/useSyncWallet"
 
-
 export default function Dashboard() {
-  const { data, isLoading } = useMarkets();
-
-  const { address, isConnected } = useAccount();
+  const { data, isLoading } = useMarkets()
+  const { address, isConnected } = useAccount()
 
   useSyncWallet()
 
-
-  // ✅ CORRECT wagmi usage (NO enabled flag)
   const { data: ethBalance } = useBalance(
-    address
-      ? { address }
-      : undefined
-  );
+    address ? { address } : undefined
+  )
 
   if (isLoading) {
-    return <div className="text-blue-400">Loading markets…</div>;
+    return <div className="text-blue-400">Loading markets…</div>
   }
 
-  const top = data!.slice(0, 6);
+  const top = data?.slice(0, 6) ?? []
 
   const ethPrice =
-    data?.find(c => c.id === "ethereum")?.current_price ?? 0;
+    data?.find(c => c.id === "ethereum")?.current_price ?? 0
 
   const ethValueUSD =
     ethBalance && ethPrice
       ? Number(ethBalance.formatted) * ethPrice
-      : 0;
+      : 0
 
   return (
     <div className="space-y-6">
@@ -70,7 +64,7 @@ export default function Dashboard() {
           {top.map(c => (
             <div
               key={c.id}
-              className="grid grid-cols-5 items-center px-4 py-3 text-sm"
+              className="grid grid-cols-[48px_1fr_64px_64px] md:grid-cols-5 items-center gap-2 px-4 py-3 text-sm"
             >
               <div className="font-semibold">
                 {c.symbol.toUpperCase()}
@@ -95,28 +89,24 @@ export default function Dashboard() {
 
               <div>${(c.market_cap / 1e9).toFixed(1)}B</div>
 
-              <MiniSparkline
-                data={c.sparkline_in_7d?.price || []}
-                positive={c.price_change_percentage_24h >= 0}
-              />
+              <div className="h-8 w-full max-w-[96px] overflow-hidden flex items-center">
+                <MiniSparkline
+                  data={c.sparkline_in_7d?.price || []}
+                  positive={c.price_change_percentage_24h >= 0}
+                />
+              </div>
             </div>
           ))}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 /* ===========================
    Small stat card
 =========================== */
-function Stat({
-  title,
-  value,
-}: {
-  title: string;
-  value: string;
-}) {
+function Stat({ title, value }: { title: string; value: string }) {
   return (
     <div className="bg-[#0b1220] border border-blue-900/30 p-4 rounded">
       <div className="flex items-center justify-between">
@@ -125,5 +115,5 @@ function Stat({
       </div>
       <p className="text-lg font-semibold mt-1">{value}</p>
     </div>
-  );
+  )
 }
