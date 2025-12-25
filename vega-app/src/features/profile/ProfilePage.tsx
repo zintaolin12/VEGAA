@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"
-import { useAuth } from "../../hooks/useAuth"
+import { useEffect, useState } from "react"
 import { supabase } from "../../lib/supabase"
+import { useAuth } from "../../hooks/useAuth"
 import {
   signInWithGoogle,
   signInWithDiscord,
@@ -21,7 +21,6 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // ================= FETCH PROFILE =================
   useEffect(() => {
     if (!user) return
 
@@ -32,14 +31,13 @@ export default function ProfilePage() {
       .single()
       .then(({ data }) => {
         if (data) {
-          setUsername(data.username ?? "")
-          setAvatar(data.avatar_url ?? null)
+          setUsername(data.username || "")
+          setAvatar(data.avatar_url || null)
         }
       })
   }, [user])
 
-  // ================= SAVE PROFILE =================
-  async function saveProfile() {
+  const saveProfile = async () => {
     if (!user) return
     setSaving(true)
 
@@ -47,96 +45,66 @@ export default function ProfilePage() {
       id: user.id,
       username,
       avatar_url: avatar,
-      updated_at: new Date().toISOString(),
     })
 
     setSaving(false)
   }
 
-  // ================= UPLOAD AVATAR =================
-  async function uploadAvatar(file: File) {
-    if (!user) return
-
-    const ext = file.name.split(".").pop()
-    const path = `${user.id}.${ext}`
-
-    await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true })
-
-    const { data } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(path)
-
-    setAvatar(data.publicUrl)
-  }
-
-  // ================= LOADING =================
   if (loading) {
-    return (
-      <div className="p-6 text-blue-400 text-center">
-        Loading profile…
-      </div>
-    )
+    return <div className="p-6 text-blue-400">Loading profile…</div>
   }
 
-  // ================= AUTHENTICATED =================
+  /* ================= AUTHENTICATED ================= */
   if (user) {
     return (
-      <div className="max-w-md mx-auto mt-10 bg-[#0b1220] border border-blue-900/30 rounded-lg p-6 space-y-5">
-        <h2 className="text-xl font-semibold text-blue-400">
-          Account Settings
-        </h2>
-
-        {/* AVATAR */}
-        <div className="flex items-center gap-4">
-          <img
-            src={avatar ?? "/avatar-placeholder.png"}
-            className="w-16 h-16 rounded-full border border-blue-900/40 object-cover"
-          />
-
-          <label className="text-sm cursor-pointer text-blue-400">
-            Change avatar
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) =>
-                e.target.files && uploadAvatar(e.target.files[0])
+      <div className="max-w-xl mx-auto p-6 space-y-6">
+        <div className="bg-[#0b1220] border border-blue-900/30 rounded-xl p-6 space-y-4">
+          <div className="flex items-center gap-4">
+            <img
+              src={
+                avatar ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`
               }
+              className="w-16 h-16 rounded-full border border-blue-900/30"
             />
-          </label>
-        </div>
 
-        {/* USERNAME */}
-        <div>
-          <label className="text-xs text-blue-400">Username</label>
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded mt-1"
-            placeholder="Your username"
-          />
-        </div>
+            <div>
+              <p className="text-sm text-blue-400">Signed in as</p>
+              <p className="font-medium">{user.email}</p>
+            </div>
+          </div>
 
-        {/* INFO */}
-        <div className="text-xs text-gray-400 space-y-1">
-          <p>Email: {user.email}</p>
-          <p>Provider: {user.app_metadata.provider}</p>
-        </div>
+          {/* SETTINGS */}
+          <div className="space-y-3">
+            <label className="text-sm text-blue-400">Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
+              placeholder="yourname"
+            />
 
-        {/* ACTIONS */}
-        <button
-          onClick={saveProfile}
-          disabled={saving}
-          className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded text-white"
-        >
-          {saving ? "Saving…" : "Save changes"}
-        </button>
+            <label className="text-sm text-blue-400">Avatar URL</label>
+            <input
+              value={avatar ?? ""}
+              onChange={(e) => setAvatar(e.target.value)}
+              className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
+              placeholder="https://..."
+            />
+          </div>
+
+          <button
+            onClick={saveProfile}
+            disabled={saving}
+            className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save profile"}
+          </button>
+        </div>
 
         <button
           onClick={signOut}
-          className="w-full bg-red-600 hover:bg-red-700 py-2 rounded text-white"
+          className="w-full bg-red-600 hover:bg-red-700 py-2 rounded"
         >
           Sign out
         </button>
@@ -144,23 +112,21 @@ export default function ProfilePage() {
     )
   }
 
-  // ================= LOGIN =================
+  /* ================= LOGIN ================= */
   return (
-    <div className="max-w-md mx-auto mt-10 bg-[#0b1220] border border-blue-900/30 rounded-lg p-6 space-y-4">
-      <h2 className="text-xl font-semibold text-blue-400">
-        Sign in to VEGA
-      </h2>
+    <div className="max-w-md mx-auto mt-10 bg-[#0b1220] border border-blue-900/30 rounded-xl p-6 space-y-4">
+      <h2 className="text-xl font-semibold text-blue-400">Sign in to VEGA</h2>
 
       <button
         onClick={signInWithGoogle}
-        className="w-full bg-blue-600 py-2 rounded text-white"
+        className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded"
       >
         Continue with Google
       </button>
 
       <button
         onClick={signInWithDiscord}
-        className="w-full bg-indigo-600 py-2 rounded text-white"
+        className="w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded"
       >
         Continue with Discord
       </button>
@@ -177,8 +143,8 @@ export default function ProfilePage() {
       <input
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        type="password"
         placeholder="Password"
+        type="password"
         className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
       />
 
@@ -187,14 +153,13 @@ export default function ProfilePage() {
           onClick={() => signInWithEmail(email, password)}
           className="bg-blue-600 py-2 rounded"
         >
-          Sign In
+          Sign in
         </button>
-
         <button
           onClick={() => signUpWithEmail(email, password)}
           className="bg-blue-800 py-2 rounded"
         >
-          Sign Up
+          Sign up
         </button>
       </div>
 
