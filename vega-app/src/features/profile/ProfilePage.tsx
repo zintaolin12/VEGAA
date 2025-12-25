@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "../../lib/supabase"
+import { ChangeEvent } from "react"
 import { useAuth } from "../../hooks/useAuth"
 import {
   signInWithGoogle,
@@ -54,19 +55,64 @@ export default function ProfilePage() {
     return <div className="p-6 text-blue-400">Loading profile…</div>
   }
 
+const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
+  if (!user || !e.target.files?.[0]) return
+
+  const file = e.target.files[0]
+  const ext = file.name.split(".").pop()
+  const filePath = `${user.id}.${ext}`
+
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, file, {
+      upsert: true,
+      cacheControl: "3600",
+    })
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  const { data } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(filePath)
+
+  setAvatar(data.publicUrl)
+
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    avatar_url: data.publicUrl,
+  })
+}
+
+
   /* ================= AUTHENTICATED ================= */
   if (user) {
     return (
       <div className="max-w-xl mx-auto p-6 space-y-6">
         <div className="bg-[#0b1220] border border-blue-900/30 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-4">
-            <img
-              src={
-                avatar ||
-                `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`
-              }
-              className="w-16 h-16 rounded-full border border-blue-900/30"
-            />
+           <div className="relative">
+  <img
+    src={
+      avatar ||
+      `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`
+    }
+    className="w-20 h-20 rounded-full border border-blue-900/30 object-cover"
+  />
+
+  <label className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded cursor-pointer">
+    Edit
+    <input
+      type="file"
+      accept="image/*"
+      onChange={uploadAvatar}
+      className="hidden"
+    />
+  </label>
+</div>
+
 
             <div>
               <p className="text-sm text-blue-400">Signed in as</p>
