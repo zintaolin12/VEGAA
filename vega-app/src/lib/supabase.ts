@@ -1,8 +1,13 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { polygon, mainnet } from 'wagmi/chains'
+import { createClient } from "@supabase/supabase-js";
 
-export const wagmiConfig = getDefaultConfig({
-  appName: 'VEGA',
-  projectId: 'VEGA_WALLET_CONNECT', // replace later
-  chains: [polygon, mainnet],
-})
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Supabase env variables are missing");
+}
+
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
