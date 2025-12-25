@@ -2,11 +2,16 @@ import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { useMarkets } from "../../hooks/useMarkets";
 import MiniSparkline from "../../components/charts/MiniSparkline";
+import { useSyncWallet } from "../../hooks/useSyncWallet"
+
 
 export default function Dashboard() {
   const { data, isLoading } = useMarkets();
 
   const { address, isConnected } = useAccount();
+
+  useSyncWallet()
+
 
   // ✅ CORRECT wagmi usage (NO enabled flag)
   const { data: ethBalance } = useBalance(

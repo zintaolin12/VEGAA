@@ -1,5 +1,6 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../../hooks/useAuth"
+import { supabase } from "../../lib/supabase"
 import {
   signInWithGoogle,
   signInWithDiscord,
@@ -11,32 +12,64 @@ import {
 
 export default function ProfilePage() {
   const { user, loading } = useAuth()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [sent, setSent] = useState(false)
+  const [wallet, setWallet] = useState<string | null>(null)
 
+  // Fetch wallet from Supabase profile
+  useEffect(() => {
+    if (!user) return
+
+    supabase
+      .from("profiles")
+      .select("wallet_address")
+      .eq("id", user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (!error) {
+          setWallet(data?.wallet_address ?? null)
+        }
+      })
+  }, [user])
+
+  // ===================== LOADING =====================
   if (loading) {
-    return <div className="text-blue-400 p-6">Loading profile…</div>
+    return (
+      <div className="p-6 text-blue-400 text-center">
+        Loading profile…
+      </div>
+    )
   }
 
   // ===================== AUTHENTICATED =====================
   if (user) {
     return (
       <div className="max-w-md mx-auto mt-10 bg-[#0b1220] border border-blue-900/30 rounded-lg p-6 space-y-4">
-        <h2 className="text-xl font-semibold text-blue-400">Profile</h2>
+        <h2 className="text-xl font-semibold text-blue-400">
+          Profile
+        </h2>
 
-        <div className="text-sm text-gray-300 space-y-1">
+        <div className="text-sm text-gray-300 space-y-2">
           <p>
             <span className="text-blue-400">Email:</span>{" "}
             {user.email}
           </p>
+
           <p>
             <span className="text-blue-400">User ID:</span>{" "}
             {user.id}
           </p>
+
           <p>
             <span className="text-blue-400">Provider:</span>{" "}
             {user.app_metadata.provider}
+          </p>
+
+          <p>
+            <span className="text-blue-400">Wallet:</span>{" "}
+            {wallet ?? "Not connected"}
           </p>
         </div>
 
@@ -57,7 +90,7 @@ export default function ProfilePage() {
         Sign in to VEGA
       </h2>
 
-      {/* SOCIAL */}
+      {/* SOCIAL LOGIN */}
       <div className="space-y-2">
         <button
           onClick={signInWithGoogle}
@@ -76,7 +109,7 @@ export default function ProfilePage() {
 
       <div className="text-center text-xs text-gray-400">OR</div>
 
-      {/* EMAIL */}
+      {/* EMAIL / PASSWORD */}
       <input
         value={email}
         onChange={(e) => setEmail(e.target.value)}
@@ -95,14 +128,14 @@ export default function ProfilePage() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => signInWithEmail(email, password)}
-          className="bg-blue-600 py-2 rounded"
+          className="bg-blue-600 py-2 rounded text-white"
         >
           Sign In
         </button>
 
         <button
           onClick={() => signUpWithEmail(email, password)}
-          className="bg-blue-800 py-2 rounded"
+          className="bg-blue-800 py-2 rounded text-white"
         >
           Sign Up
         </button>
