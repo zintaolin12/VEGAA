@@ -18,9 +18,7 @@ export default function WalletPage() {
         <>
           <div className="text-sm text-blue-300">
             Address
-            <div className="font-mono text-white break-all">
-              {address}
-            </div>
+            <div className="font-mono text-white break-all">{address}</div>
           </div>
 
           <div className="flex justify-between text-sm">
