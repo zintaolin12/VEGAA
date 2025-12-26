@@ -19,16 +19,19 @@ export default function WalletPage() {
 
       {/* 👇 CONDITIONAL CONNECT UI */}
       {isTrustWallet ? (
-        <button
-          onClick={() => (window as any).ethereum?.request({ method: "eth_requestAccounts" })}
-          className="w-full bg-blue-600 py-3 rounded-lg font-semibold"
-        >
-          Connect Wallet
-        </button>
-      ) : (
-        <ConnectButton />
-      )}
-
+  <button
+    onClick={async () => {
+      await (window as any).ethereum.request({
+        method: "eth_requestAccounts",
+      })
+    }}
+    className="w-full bg-blue-600 py-3 rounded-lg font-semibold"
+  >
+    Connect Wallet
+  </button>
+) : (
+  <ConnectButton />
+)}
       {isConnected && (
         <>
           <div className="text-sm text-blue-300">

@@ -14,15 +14,25 @@ import "./index.css"
 
 const queryClient = new QueryClient()
 
+const isTrustWallet =
+  typeof window !== "undefined" &&
+  (window as any).ethereum?.isTrust
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
-        <RainbowKitProvider>
+        {isTrustWallet ? (
           <BrowserRouter>
             <App />
           </BrowserRouter>
-        </RainbowKitProvider>
+        ) : (
+          <RainbowKitProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </RainbowKitProvider>
+        )}
       </WagmiProvider>
     </QueryClientProvider>
   </React.StrictMode>
