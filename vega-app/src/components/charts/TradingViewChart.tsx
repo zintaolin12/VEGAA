@@ -1,27 +1,46 @@
+import { useEffect, useRef } from "react"
+
 type Props = {
-  symbol?: string // e.g. "BINANCE:ETHUSDT"
-  height?: number
+  symbol: string
 }
 
-export default function TradingViewChart({
-  symbol = "BINANCE:ETHUSDT",
-  height = 420,
-}: Props) {
-  const src = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(
-    symbol
-  )}&interval=15&theme=dark&style=1&locale=en&toolbarbg=%23020617&hide_side_toolbar=1&allow_symbol_change=1`
+export default function TradingViewChart({ symbol }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    containerRef.current.innerHTML = ""
+
+    const script = document.createElement("script")
+    script.src = "https://s3.tradingview.com/tv.js"
+    script.async = true
+
+    script.onload = () => {
+      // @ts-ignore
+      new window.TradingView.widget({
+        autosize: true,
+        symbol: `BINANCE:${symbol}USDT`,
+        interval: "15",
+        timezone: "Etc/UTC",
+        theme: "dark",
+        style: "1",
+        locale: "en",
+        enable_publishing: false,
+        hide_side_toolbar: false,
+        allow_symbol_change: true,
+        container_id: containerRef.current!.id,
+      })
+    }
+
+    containerRef.current.appendChild(script)
+  }, [symbol])
 
   return (
     <div
-      className="w-full overflow-hidden rounded-lg border border-blue-900/30 bg-black"
-      style={{ height }}
-    >
-      <iframe
-        src={src}
-        className="w-full h-full"
-        frameBorder={0}
-        allowTransparency
-      />
-    </div>
+      id="tradingview_chart"
+      ref={containerRef}
+      className="w-full h-[420px] bg-black rounded"
+    />
   )
 }
