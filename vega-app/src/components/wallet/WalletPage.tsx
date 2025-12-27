@@ -20,6 +20,9 @@ export default function WalletPage() {
   const [txHash, setTxHash] = useState("")
   const [error, setError] = useState("")
 
+  
+
+
   /* ===========================
      ERC-20 State
   =========================== */
@@ -67,12 +70,15 @@ export default function WalletPage() {
           Unlock Wallet
         </button>
 
-        <button
-          onClick={() => createWallet(password)}
-          className="w-full border border-blue-900/40 py-2 rounded"
-        >
-          Create Wallet
-        </button>
+        {!localStorage.getItem("vega_wallet_encrypted") && (
+  <button
+    onClick={() => createWallet(password)}
+    className="w-full border border-blue-900/40 py-2 rounded"
+  >
+    Create Wallet
+  </button>
+)}
+
       </div>
     )
   }

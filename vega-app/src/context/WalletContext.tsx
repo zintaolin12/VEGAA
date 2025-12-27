@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
+
 import { ethers } from "ethers"
 
 /* ===========================
@@ -57,10 +58,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isLocked, setIsLocked] = useState(true)
   const [balance, setBalance] = useState("0.00")
 
+useEffect(() => {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored) {
+    // wallet exists, just locked
+    setIsLocked(true)
+  }
+}, [])
+
+
   function getSigner() {
     if (!wallet) throw new Error("Wallet locked")
     return ethers.Wallet.fromPhrase(wallet.mnemonic).connect(provider)
   }
+
+  
 
   async function refreshBalance() {
     if (!wallet) return
