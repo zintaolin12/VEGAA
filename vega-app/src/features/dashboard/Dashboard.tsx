@@ -1,18 +1,11 @@
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react"
-import { useAccount, useBalance } from "wagmi"
 import { useMarkets } from "../../hooks/useMarkets"
+import { useVegaWallet } from "../../context/WalletContext"
 import MiniSparkline from "../../components/charts/MiniSparkline"
-import { useSyncWallet } from "../../hooks/useSyncWallet"
 
 export default function Dashboard() {
   const { data, isLoading } = useMarkets()
-  const { address, isConnected } = useAccount()
-
-  useSyncWallet()
-
-  const { data: ethBalance } = useBalance(
-    address ? { address } : undefined
-  )
+  const { wallet, balance, isLocked } = useVegaWallet()
 
   if (isLoading) {
     return <div className="text-blue-400">Loading markets…</div>
@@ -24,8 +17,8 @@ export default function Dashboard() {
     data?.find(c => c.id === "ethereum")?.current_price ?? 0
 
   const ethValueUSD =
-    ethBalance && ethPrice
-      ? Number(ethBalance.formatted) * ethPrice
+    !isLocked && ethPrice
+      ? Number(balance) * ethPrice
       : 0
 
   return (
@@ -35,22 +28,24 @@ export default function Dashboard() {
         <Stat
           title="Wallet Balance"
           value={
-            isConnected
+            !isLocked
               ? `$${ethValueUSD.toLocaleString(undefined, {
                   maximumFractionDigits: 2,
                 })}`
-              : "Not connected"
+              : "Locked"
           }
         />
+
         <Stat
           title="ETH Balance"
-          value={
-            ethBalance
-              ? `${Number(ethBalance.formatted).toFixed(4)} ETH`
-              : "—"
-          }
+          value={!isLocked ? `${balance} ETH` : "—"}
         />
-        <Stat title="Assets" value={isConnected ? "1" : "0"} />
+
+        <Stat
+          title="Assets"
+          value={!isLocked ? "1" : "0"}
+        />
+
         <Stat title="Market Cap" value="$2.1T" />
       </div>
 
@@ -103,9 +98,6 @@ export default function Dashboard() {
   )
 }
 
-/* ===========================
-   Small stat card
-=========================== */
 function Stat({ title, value }: { title: string; value: string }) {
   return (
     <div className="bg-[#0b1220] border border-blue-900/30 p-4 rounded">
