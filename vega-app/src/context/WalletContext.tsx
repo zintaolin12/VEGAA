@@ -1,9 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { ethers } from "ethers"
 
+/* ===========================
+   TYPES
+=========================== */
 type WalletState = {
   address: string
   mnemonic: string
+}
+
+type TokenBalance = {
+  symbol: string
+  balance: string
 }
 
 type WalletContextType = {
@@ -16,23 +24,38 @@ type WalletContextType = {
   lockWallet: () => void
   refreshBalance: () => Promise<void>
   sendTransaction: (to: string, amountEth: string) => Promise<string>
-  getTokenBalance: (token: string) => Promise<{ symbol: string; balance: string }>
+  getTokenBalance: (token: string) => Promise<TokenBalance>
   sendToken: (token: string, to: string, amount: string) => Promise<string>
+  swapToken: (fromToken: string, toToken: string, amount: string) => Promise<string>
 }
 
 const WalletContext = createContext<WalletContextType | null>(null)
 
 const STORAGE_KEY = "vega_wallet_encrypted"
 const RPC_URL = "https://rpc.ankr.com/eth"
+export const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+
 const provider = new ethers.JsonRpcProvider(RPC_URL)
 
+/* ===========================
+   ERC20 ABI
+=========================== */
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+  "function transfer(address,uint256) returns (bool)"
+]
+
+/* ===========================
+   PROVIDER
+=========================== */
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<WalletState | null>(null)
   const [isLocked, setIsLocked] = useState(true)
   const [hasWallet, setHasWallet] = useState(false)
   const [balance, setBalance] = useState("0.00")
 
-  /* ================= INIT ================= */
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
     setHasWallet(!!stored)
@@ -52,8 +75,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   async function createWallet(password: string) {
     if (!password) throw new Error("Password required")
-
     const w = ethers.Wallet.createRandom()
+
     const payload = JSON.stringify({
       address: w.address,
       mnemonic: w.mnemonic!.phrase,
@@ -134,15 +157,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function getTokenBalance(token: string) {
-    const abi = [
-      "function balanceOf(address) view returns (uint256)",
-      "function decimals() view returns (uint8)",
-      "function symbol() view returns (string)",
-    ]
-
     if (!wallet) throw new Error("Wallet locked")
 
-    const contract = new ethers.Contract(token, abi, provider)
+    const contract = new ethers.Contract(token, ERC20_ABI, provider)
     const [raw, decimals, symbol] = await Promise.all([
       contract.balanceOf(wallet.address),
       contract.decimals(),
@@ -156,17 +173,42 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function sendToken(token: string, to: string, amount: string) {
-    const abi = ["function transfer(address,uint256) returns (bool)", "function decimals() view returns (uint8)"]
     const signer = getSigner()
-    const contract = new ethers.Contract(token, abi, signer)
+    const contract = new ethers.Contract(token, ERC20_ABI, signer)
     const decimals = await contract.decimals()
 
-    const tx = await contract.transfer(
-      to,
-      ethers.parseUnits(amount, decimals)
+    const tx = await contract.transfer(to, ethers.parseUnits(amount, decimals))
+    await tx.wait()
+    return tx.hash
+  }
+
+  /* ===========================
+     1INCH SWAP FUNCTION
+  ============================ */
+  async function swapToken(fromToken: string, toToken: string, amount: string): Promise<string> {
+    if (!wallet) throw new Error("Wallet locked")
+
+    const signer = getSigner()
+    const decimals = fromToken === ETH_ADDRESS ? 18 : await new ethers.Contract(fromToken, ERC20_ABI, provider).decimals()
+    const amountWei = ethers.parseUnits(amount, decimals)
+
+    const res = await fetch(
+      `https://api.1inch.io/v5.0/1/swap?fromTokenAddress=${fromToken}&toTokenAddress=${toToken}&amount=${amountWei}&fromAddress=${wallet.address}&slippage=1`
     )
 
+    const data = await res.json()
+    if (!data.tx) throw new Error("Swap failed")
+
+    const tx = await signer.sendTransaction({
+      to: data.tx.to,
+      data: data.tx.data,
+      value: BigInt(data.tx.value || 0),
+      gasLimit: BigInt(data.tx.gas || 0),
+      gasPrice: BigInt(data.tx.gasPrice || 0),
+    })
+
     await tx.wait()
+    await refreshBalance()
     return tx.hash
   }
 
@@ -184,6 +226,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         sendTransaction,
         getTokenBalance,
         sendToken,
+        swapToken,
       }}
     >
       {children}
@@ -196,4 +239,3 @@ export function useVegaWallet() {
   if (!ctx) throw new Error("useVegaWallet must be used inside WalletProvider")
   return ctx
 }
-
