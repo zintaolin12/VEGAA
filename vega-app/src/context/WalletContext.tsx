@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
-
 import { ethers } from "ethers"
 
 /* ===========================
@@ -8,11 +7,6 @@ import { ethers } from "ethers"
 type WalletState = {
   address: string
   mnemonic: string
-}
-
-type TokenBalance = {
-  symbol: string
-  balance: string
 }
 
 type WalletContextType = {
@@ -25,18 +19,23 @@ type WalletContextType = {
   resetWallet: () => void
   refreshBalance: () => Promise<void>
   sendTransaction: (to: string, amountEth: string) => Promise<string>
-  getTokenBalance: (tokenAddress: string) => Promise<TokenBalance>
-  sendToken: (
-    tokenAddress: string,
-    to: string,
+  swapToken: (
+    fromToken: string,
+    toToken: string,
     amount: string
   ) => Promise<string>
 }
 
 const WalletContext = createContext<WalletContextType | null>(null)
 
+/* ===========================
+   CONSTANTS
+=========================== */
 const STORAGE_KEY = "vega_wallet_encrypted"
 const RPC_URL = "https://rpc.ankr.com/eth"
+
+export const ETH_ADDRESS =
+  "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
 const provider = new ethers.JsonRpcProvider(RPC_URL)
 
@@ -51,28 +50,23 @@ const ERC20_ABI = [
 ]
 
 /* ===========================
-   Provider
+   PROVIDER
 =========================== */
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<WalletState | null>(null)
   const [isLocked, setIsLocked] = useState(true)
   const [balance, setBalance] = useState("0.00")
 
-useEffect(() => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    // wallet exists, just locked
-    setIsLocked(true)
-  }
-}, [])
-
+  useEffect(() => {
+    if (localStorage.getItem(STORAGE_KEY)) {
+      setIsLocked(true)
+    }
+  }, [])
 
   function getSigner() {
     if (!wallet) throw new Error("Wallet locked")
     return ethers.Wallet.fromPhrase(wallet.mnemonic).connect(provider)
   }
-
-  
 
   async function refreshBalance() {
     if (!wallet) return
@@ -88,19 +82,28 @@ useEffect(() => {
       mnemonic: w.mnemonic!.phrase,
     })
 
+    const iv = crypto.getRandomValues(new Uint8Array(12))
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(password.padEnd(32)),
+      "AES-GCM",
+      false,
+      ["encrypt"]
+    )
+
     const encrypted = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: crypto.getRandomValues(new Uint8Array(12)) },
-      await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(password.padEnd(32)),
-        "AES-GCM",
-        false,
-        ["encrypt"]
-      ),
+      { name: "AES-GCM", iv },
+      key,
       new TextEncoder().encode(payload)
     )
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(new Uint8Array(encrypted))))
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        iv: Array.from(iv),
+        data: Array.from(new Uint8Array(encrypted)),
+      })
+    )
 
     setWallet({
       address: w.address,
@@ -116,17 +119,22 @@ useEffect(() => {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return false
 
-      const encrypted = new Uint8Array(JSON.parse(raw))
+      const stored = JSON.parse(raw)
+      const iv = new Uint8Array(stored.iv)
+      const data = new Uint8Array(stored.data)
+
+      const key = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(password.padEnd(32)),
+        "AES-GCM",
+        false,
+        ["decrypt"]
+      )
+
       const decrypted = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: encrypted.slice(0, 12) },
-        await crypto.subtle.importKey(
-          "raw",
-          new TextEncoder().encode(password.padEnd(32)),
-          "AES-GCM",
-          false,
-          ["decrypt"]
-        ),
-        encrypted.slice(12)
+        { name: "AES-GCM", iv },
+        key,
+        data
       )
 
       const parsed = JSON.parse(new TextDecoder().decode(decrypted))
@@ -150,37 +158,40 @@ useEffect(() => {
     return tx.hash
   }
 
-  async function getTokenBalance(tokenAddress: string): Promise<TokenBalance> {
-    if (!wallet) throw new Error("Wallet locked")
-
-    const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
-    const [raw, decimals, symbol] = await Promise.all([
-      token.balanceOf(wallet.address),
-      token.decimals(),
-      token.symbol(),
-    ])
-
-    return {
-      symbol,
-      balance: ethers.formatUnits(raw, decimals),
-    }
-  }
-
-  async function sendToken(
-    tokenAddress: string,
-    to: string,
+  async function swapToken(
+    fromToken: string,
+    toToken: string,
     amount: string
   ): Promise<string> {
-    const signer = getSigner()
-    const token = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
-    const decimals = await token.decimals()
+    if (!wallet) throw new Error("Wallet locked")
 
-    const tx = await token.transfer(
-      to,
-      ethers.parseUnits(amount, decimals)
+    const signer = getSigner()
+    const decimals =
+      fromToken === ETH_ADDRESS ? 18 : await new ethers.Contract(
+        fromToken,
+        ERC20_ABI,
+        provider
+      ).decimals()
+
+    const amountWei = ethers.parseUnits(amount, decimals)
+
+    const res = await fetch(
+      `https://api.1inch.io/v5.0/1/swap?fromTokenAddress=${fromToken}&toTokenAddress=${toToken}&amount=${amountWei}&fromAddress=${wallet.address}&slippage=1`
     )
 
+    const data = await res.json()
+    if (!data.tx) throw new Error("Swap failed")
+
+    const tx = await signer.sendTransaction({
+      to: data.tx.to,
+      data: data.tx.data,
+      value: BigInt(data.tx.value || 0),
+      gasLimit: BigInt(data.tx.gas),
+      gasPrice: BigInt(data.tx.gasPrice),
+    })
+
     await tx.wait()
+    await refreshBalance()
     return tx.hash
   }
 
@@ -207,8 +218,7 @@ useEffect(() => {
         resetWallet,
         refreshBalance,
         sendTransaction,
-        getTokenBalance,
-        sendToken,
+        swapToken,
       }}
     >
       {children}
