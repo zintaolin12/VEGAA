@@ -5,6 +5,7 @@ export default function WalletPage() {
   const {
     wallet,
     isLocked,
+    hasWallet,
     balance,
     unlockWallet,
     createWallet,
@@ -27,20 +28,42 @@ export default function WalletPage() {
   const [tokenTo, setTokenTo] = useState("")
   const [tokenAmt, setTokenAmt] = useState("")
 
-  /* ================= TOKEN BALANCE ================= */
   useEffect(() => {
     if (!wallet) return
-
     getTokenBalance(token)
       .then(b => setTokenBal(`${b.balance} ${b.symbol}`))
       .catch(() => setTokenBal("—"))
   }, [wallet, token])
 
+  /* ================= NO WALLET ================= */
+  if (!hasWallet) {
+    return (
+      <div className="max-w-md mx-auto mt-10 bg-[#0b1220] p-6 rounded-xl space-y-4">
+        <h2 className="text-xl text-blue-400">Create VEGA Wallet</h2>
+
+        <input
+          type="password"
+          placeholder="Set wallet password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          className="w-full bg-black border px-3 py-2 rounded"
+        />
+
+        <button
+          onClick={() => createWallet(password)}
+          className="w-full bg-blue-600 py-2 rounded"
+        >
+          Create Wallet
+        </button>
+      </div>
+    )
+  }
+
   /* ================= LOCKED ================= */
   if (isLocked) {
     return (
       <div className="max-w-md mx-auto mt-10 bg-[#0b1220] p-6 rounded-xl space-y-4">
-        <h2 className="text-xl font-semibold text-blue-400">VEGA Wallet</h2>
+        <h2 className="text-xl text-blue-400">Unlock Wallet</h2>
 
         <input
           type="password"
@@ -52,7 +75,6 @@ export default function WalletPage() {
 
         <button
           onClick={async () => {
-            if (!password) return alert("Enter password")
             const ok = await unlockWallet(password)
             if (!ok) alert("Incorrect password")
           }}
@@ -60,15 +82,6 @@ export default function WalletPage() {
         >
           Unlock Wallet
         </button>
-
-        {!localStorage.getItem("vega_wallet_encrypted") && (
-          <button
-            onClick={() => createWallet(password)}
-            className="w-full border py-2 rounded"
-          >
-            Create Wallet
-          </button>
-        )}
       </div>
     )
   }
@@ -94,7 +107,13 @@ export default function WalletPage() {
       />
 
       <button
-        onClick={() => sendTransaction(to, amount)}
+        onClick={async () => {
+          try {
+            await sendTransaction(to, amount)
+          } catch (e: any) {
+            setError(e.message)
+          }
+        }}
         className="w-full bg-green-600 py-2 rounded"
       >
         Send ETH
@@ -142,4 +161,3 @@ export default function WalletPage() {
     </div>
   )
 }
-

@@ -18,7 +18,7 @@ export default function ProfilePage() {
   const [sent, setSent] = useState(false)
 
   const [username, setUsername] = useState("")
-  const [avatar, setAvatar] = useState<string | null>(null)
+  const [avatar, setAvatar] = useState<string>("")
   const [saving, setSaving] = useState(false)
 
   /* ================= LOAD PROFILE ================= */
@@ -27,13 +27,13 @@ export default function ProfilePage() {
 
     supabase
       .from("profiles")
-      .select("username, avatar_url")
+      .select("username, avatar")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
         if (data) {
           setUsername(data.username ?? "")
-          setAvatar(data.avatar_url ?? null)
+          setAvatar(data.avatar ?? "")
         }
       })
   }, [user])
@@ -46,7 +46,7 @@ export default function ProfilePage() {
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       username,
-      avatar_url: avatar,
+      avatar,
       updated_at: new Date().toISOString(),
     })
 
@@ -85,7 +85,7 @@ export default function ProfilePage() {
 
     await supabase.from("profiles").upsert({
       id: user.id,
-      avatar_url: data.publicUrl,
+      avatar: data.publicUrl,
     })
   }
 
@@ -134,7 +134,7 @@ export default function ProfilePage() {
 
           <label className="text-sm text-blue-400">Avatar URL</label>
           <input
-            value={avatar ?? ""}
+            value={avatar}
             onChange={e => setAvatar(e.target.value)}
             className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
           />
