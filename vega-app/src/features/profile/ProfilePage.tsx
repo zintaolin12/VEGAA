@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, ChangeEvent } from "react"
 import { supabase } from "../../lib/supabase"
-import { ChangeEvent } from "react"
 import { useAuth } from "../../hooks/useAuth"
 import {
   signInWithGoogle,
@@ -22,6 +21,7 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
+  /* ================= LOAD PROFILE ================= */
   useEffect(() => {
     if (!user) return
 
@@ -32,60 +32,66 @@ export default function ProfilePage() {
       .single()
       .then(({ data }) => {
         if (data) {
-          setUsername(data.username || "")
-          setAvatar(data.avatar_url || null)
+          setUsername(data.username ?? "")
+          setAvatar(data.avatar_url ?? null)
         }
       })
   }, [user])
 
+  /* ================= SAVE PROFILE ================= */
   const saveProfile = async () => {
     if (!user) return
     setSaving(true)
 
-    await supabase.from("profiles").upsert({
+    const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       username,
       avatar_url: avatar,
+      updated_at: new Date().toISOString(),
     })
 
     setSaving(false)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    alert("Profile saved")
+  }
+
+  /* ================= AVATAR UPLOAD ================= */
+  const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files?.[0]) return
+
+    const file = e.target.files[0]
+    const ext = file.name.split(".").pop()
+    const filePath = `${user.id}.${ext}`
+
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file, { upsert: true })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    const { data } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath)
+
+    setAvatar(data.publicUrl)
+
+    await supabase.from("profiles").upsert({
+      id: user.id,
+      avatar_url: data.publicUrl,
+    })
   }
 
   if (loading) {
     return <div className="p-6 text-blue-400">Loading profile…</div>
   }
-
-const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
-  if (!user || !e.target.files?.[0]) return
-
-  const file = e.target.files[0]
-  const ext = file.name.split(".").pop()
-  const filePath = `${user.id}.${ext}`
-
-  const { error } = await supabase.storage
-    .from("avatars")
-    .upload(filePath, file, {
-      upsert: true,
-      cacheControl: "3600",
-    })
-
-  if (error) {
-    console.error(error)
-    return
-  }
-
-  const { data } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(filePath)
-
-  setAvatar(data.publicUrl)
-
-  await supabase.from("profiles").upsert({
-    id: user.id,
-    avatar_url: data.publicUrl,
-  })
-}
-
 
   /* ================= AUTHENTICATED ================= */
   if (user) {
@@ -93,26 +99,25 @@ const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
       <div className="max-w-xl mx-auto p-6 space-y-6">
         <div className="bg-[#0b1220] border border-blue-900/30 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-4">
-           <div className="relative">
-  <img
-    src={
-      avatar ||
-      `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`
-    }
-    className="w-20 h-20 rounded-full border border-blue-900/30 object-cover"
-  />
+            <div className="relative">
+              <img
+                src={
+                  avatar ||
+                  `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`
+                }
+                className="w-20 h-20 rounded-full border border-blue-900/30 object-cover"
+              />
 
-  <label className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 rounded cursor-pointer">
-    Edit
-    <input
-      type="file"
-      accept="image/*"
-      onChange={uploadAvatar}
-      className="hidden"
-    />
-  </label>
-</div>
-
+              <label className="absolute bottom-0 right-0 bg-blue-600 text-xs px-2 py-1 rounded cursor-pointer">
+                Edit
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadAvatar}
+                  className="hidden"
+                />
+              </label>
+            </div>
 
             <div>
               <p className="text-sm text-blue-400">Signed in as</p>
@@ -120,29 +125,25 @@ const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
             </div>
           </div>
 
-          {/* SETTINGS */}
-          <div className="space-y-3">
-            <label className="text-sm text-blue-400">Username</label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
-              placeholder="yourname"
-            />
+          <label className="text-sm text-blue-400">Username</label>
+          <input
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
+          />
 
-            <label className="text-sm text-blue-400">Avatar URL</label>
-            <input
-              value={avatar ?? ""}
-              onChange={(e) => setAvatar(e.target.value)}
-              className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
-              placeholder="https://..."
-            />
-          </div>
+          <label className="text-sm text-blue-400">Avatar URL</label>
+          <input
+            value={avatar ?? ""}
+            onChange={e => setAvatar(e.target.value)}
+            className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
+          />
 
           <button
+            type="button"
             onClick={saveProfile}
             disabled={saving}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium disabled:opacity-50"
+            className="w-full bg-blue-600 py-2 rounded disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save profile"}
           </button>
@@ -150,7 +151,7 @@ const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
 
         <button
           onClick={signOut}
-          className="w-full bg-red-600 hover:bg-red-700 py-2 rounded"
+          className="w-full bg-red-600 py-2 rounded"
         >
           Sign out
         </button>
@@ -163,48 +164,34 @@ const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     <div className="max-w-md mx-auto mt-10 bg-[#0b1220] border border-blue-900/30 rounded-xl p-6 space-y-4">
       <h2 className="text-xl font-semibold text-blue-400">Sign in to VEGA</h2>
 
-      <button
-        onClick={signInWithGoogle}
-        className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded"
-      >
+      <button onClick={signInWithGoogle} className="w-full bg-blue-600 py-2 rounded">
         Continue with Google
       </button>
 
-      <button
-        onClick={signInWithDiscord}
-        className="w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded"
-      >
+      <button onClick={signInWithDiscord} className="w-full bg-indigo-600 py-2 rounded">
         Continue with Discord
       </button>
 
-      <div className="text-center text-xs text-gray-400">OR</div>
-
       <input
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={e => setEmail(e.target.value)}
         placeholder="Email"
         className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
       />
 
       <input
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
+        onChange={e => setPassword(e.target.value)}
         type="password"
+        placeholder="Password"
         className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
       />
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={() => signInWithEmail(email, password)}
-          className="bg-blue-600 py-2 rounded"
-        >
+        <button onClick={() => signInWithEmail(email, password)} className="bg-blue-600 py-2 rounded">
           Sign in
         </button>
-        <button
-          onClick={() => signUpWithEmail(email, password)}
-          className="bg-blue-800 py-2 rounded"
-        >
+        <button onClick={() => signUpWithEmail(email, password)} className="bg-blue-800 py-2 rounded">
           Sign up
         </button>
       </div>
