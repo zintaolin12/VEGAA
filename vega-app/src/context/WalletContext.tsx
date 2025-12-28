@@ -9,21 +9,31 @@ type WalletState = {
   mnemonic: string
 }
 
+type TokenBalance = {
+  symbol: string
+  balance: string
+}
+
 type WalletContextType = {
   wallet: WalletState | null
   isLocked: boolean
   balance: string
-  createWallet: (password: string) => Promise<void>
-  unlockWallet: (password: string) => Promise<boolean>
-  lockWallet: () => void
-  resetWallet: () => void
-  refreshBalance: () => Promise<void>
-  sendTransaction: (to: string, amountEth: string) => Promise<string>
-  swapToken: (
+
+  createWallet(password: string): Promise<void>
+  unlockWallet(password: string): Promise<boolean>
+  lockWallet(): void
+  resetWallet(): void
+  refreshBalance(): Promise<void>
+
+  sendTransaction(to: string, amountEth: string): Promise<string>
+  getTokenBalance(tokenAddress: string): Promise<TokenBalance>
+  sendToken(tokenAddress: string, to: string, amount: string): Promise<string>
+
+  swapToken(
     fromToken: string,
     toToken: string,
     amount: string
-  ) => Promise<string>
+  ): Promise<string>
 }
 
 const WalletContext = createContext<WalletContextType | null>(null)
@@ -74,6 +84,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setBalance(Number(ethers.formatEther(bal)).toFixed(6))
   }
 
+  /* ===========================
+     WALLET LIFECYCLE
+  =========================== */
   async function createWallet(password: string) {
     const w = ethers.Wallet.createRandom()
 
@@ -82,7 +95,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       mnemonic: w.mnemonic!.phrase,
     })
 
-    const iv = crypto.getRandomValues(new Uint8Array(12))
     const key = await crypto.subtle.importKey(
       "raw",
       new TextEncoder().encode(password.padEnd(32)),
@@ -91,6 +103,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       ["encrypt"]
     )
 
+    const iv = crypto.getRandomValues(new Uint8Array(12))
     const encrypted = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
       key,
@@ -99,17 +112,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({
-        iv: Array.from(iv),
-        data: Array.from(new Uint8Array(encrypted)),
-      })
+      JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) })
     )
 
-    setWallet({
-      address: w.address,
-      mnemonic: w.mnemonic!.phrase,
-    })
-
+    setWallet({ address: w.address, mnemonic: w.mnemonic!.phrase })
     setIsLocked(false)
     await refreshBalance()
   }
@@ -119,9 +125,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return false
 
-      const stored = JSON.parse(raw)
-      const iv = new Uint8Array(stored.iv)
-      const data = new Uint8Array(stored.data)
+      const { iv, data } = JSON.parse(raw)
 
       const key = await crypto.subtle.importKey(
         "raw",
@@ -132,9 +136,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       )
 
       const decrypted = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv },
+        { name: "AES-GCM", iv: new Uint8Array(iv) },
         key,
-        data
+        new Uint8Array(data)
       )
 
       const parsed = JSON.parse(new TextDecoder().decode(decrypted))
@@ -147,6 +151,20 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  function lockWallet() {
+    setWallet(null)
+    setIsLocked(true)
+    setBalance("0.00")
+  }
+
+  function resetWallet() {
+    localStorage.removeItem(STORAGE_KEY)
+    lockWallet()
+  }
+
+  /* ===========================
+     TRANSACTIONS
+  =========================== */
   async function sendTransaction(to: string, amountEth: string) {
     const signer = getSigner()
     const tx = await signer.sendTransaction({
@@ -158,6 +176,43 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return tx.hash
   }
 
+  async function getTokenBalance(tokenAddress: string): Promise<TokenBalance> {
+    if (!wallet) throw new Error("Wallet locked")
+
+    const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+    const [raw, decimals, symbol] = await Promise.all([
+      token.balanceOf(wallet.address),
+      token.decimals(),
+      token.symbol(),
+    ])
+
+    return {
+      symbol,
+      balance: ethers.formatUnits(raw, decimals),
+    }
+  }
+
+  async function sendToken(
+    tokenAddress: string,
+    to: string,
+    amount: string
+  ): Promise<string> {
+    const signer = getSigner()
+    const token = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
+    const decimals = await token.decimals()
+
+    const tx = await token.transfer(
+      to,
+      ethers.parseUnits(amount, decimals)
+    )
+
+    await tx.wait()
+    return tx.hash
+  }
+
+  /* ===========================
+     SWAP (1INCH)
+  =========================== */
   async function swapToken(
     fromToken: string,
     toToken: string,
@@ -195,17 +250,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return tx.hash
   }
 
-  function lockWallet() {
-    setWallet(null)
-    setIsLocked(true)
-    setBalance("0.00")
-  }
-
-  function resetWallet() {
-    localStorage.removeItem(STORAGE_KEY)
-    lockWallet()
-  }
-
   return (
     <WalletContext.Provider
       value={{
@@ -218,6 +262,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         resetWallet,
         refreshBalance,
         sendTransaction,
+        getTokenBalance,
+        sendToken,
         swapToken,
       }}
     >
@@ -226,6 +272,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+/* ===========================
+   HOOK
+=========================== */
 export function useVegaWallet() {
   const ctx = useContext(WalletContext)
   if (!ctx) throw new Error("useVegaWallet must be used inside WalletProvider")
