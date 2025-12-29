@@ -27,13 +27,13 @@ export default function ProfilePage() {
 
     supabase
       .from("profiles")
-      .select("username, avatar")
+      .select("username, avatar_url")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
         if (data) {
           setUsername(data.username ?? "")
-          setAvatar(data.avatar ?? "")
+          setAvatar(data.avatar_url?? "")
         }
       })
   }, [user])
