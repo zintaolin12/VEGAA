@@ -1,49 +1,34 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { ethers } from "ethers"
+import { useAuth } from "../hooks/useAuth"
 
-/* ===========================
-   TYPES
-=========================== */
-export type WalletState = {
+type WalletState = {
   address: string
   mnemonic: string
 }
 
-export type TokenBalance = {
+type TokenBalance = {
   symbol: string
   balance: string
 }
 
-export type WalletContextType = {
+type WalletContextType = {
   wallet: WalletState | null
-  hasWallet: boolean
   isLocked: boolean
   balance: string
+  hasWallet: boolean
   createWallet: (password: string) => Promise<void>
   unlockWallet: (password: string) => Promise<boolean>
   lockWallet: () => void
-  resetWallet: () => void
   refreshBalance: () => Promise<void>
   sendTransaction: (to: string, amountEth: string) => Promise<string>
-  getTokenBalance: (token: string) => Promise<TokenBalance>
-  sendToken: (
-    token: string,
-    to: string,
-    amount: string
-  ) => Promise<string>
+  getTokenBalance: (tokenAddress: string) => Promise<TokenBalance>
+  sendToken: (tokenAddress: string, to: string, amount: string) => Promise<string>
 }
 
-/* ===========================
-   CONSTANTS
-=========================== */
-const STORAGE_KEY = "vega_wallet_encrypted"
-const RPC_URL = "https://rpc.ankr.com/eth"
+const WalletContext = createContext<WalletContextType | null>(null)
 
+const RPC_URL = "https://rpc.ankr.com/eth"
 const provider = new ethers.JsonRpcProvider(RPC_URL)
 
 const ERC20_ABI = [
@@ -53,30 +38,21 @@ const ERC20_ABI = [
   "function transfer(address,uint256) returns (bool)",
 ]
 
-/* ===========================
-   CONTEXT
-=========================== */
-const WalletContext = createContext<WalletContextType | null>(null)
+export function WalletProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
 
-/* ===========================
-   PROVIDER
-=========================== */
-export function WalletProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+  const storageKey = user ? `vega_wallet_${user.id}` : null
+
   const [wallet, setWallet] = useState<WalletState | null>(null)
-  const [hasWallet, setHasWallet] = useState(false)
   const [isLocked, setIsLocked] = useState(false)
   const [balance, setBalance] = useState("0.00")
+  const [hasWallet, setHasWallet] = useState(false)
 
-  /* ===========================
-     INIT STATE (CRITICAL FIX)
-  =========================== */
+  /* ================= INIT ================= */
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!storageKey) return
 
+    const stored = localStorage.getItem(storageKey)
     if (stored) {
       setHasWallet(true)
       setIsLocked(true)
@@ -84,11 +60,8 @@ export function WalletProvider({
       setHasWallet(false)
       setIsLocked(false)
     }
-  }, [])
+  }, [storageKey])
 
-  /* ===========================
-     INTERNAL
-  =========================== */
   function getSigner() {
     if (!wallet) throw new Error("Wallet locked")
     return ethers.Wallet.fromPhrase(wallet.mnemonic).connect(provider)
@@ -100,11 +73,9 @@ export function WalletProvider({
     setBalance(Number(ethers.formatEther(bal)).toFixed(6))
   }
 
-  /* ===========================
-     CREATE WALLET
-  =========================== */
+  /* ================= CREATE ================= */
   async function createWallet(password: string) {
-    if (!password) throw new Error("Password required")
+    if (!storageKey) return
 
     const w = ethers.Wallet.createRandom()
 
@@ -128,35 +99,26 @@ export function WalletProvider({
       new TextEncoder().encode(payload)
     )
 
-    const stored = JSON.stringify({
-      iv: Array.from(iv),
-      data: Array.from(new Uint8Array(encrypted)),
-    })
+    const stored = new Uint8Array([...iv, ...new Uint8Array(encrypted)])
+    localStorage.setItem(storageKey, JSON.stringify(Array.from(stored)))
 
-    localStorage.setItem(STORAGE_KEY, stored)
-
-    setWallet({
-      address: w.address,
-      mnemonic: w.mnemonic!.phrase,
-    })
-
+    setWallet({ address: w.address, mnemonic: w.mnemonic!.phrase })
     setHasWallet(true)
     setIsLocked(false)
-
     await refreshBalance()
   }
 
-  /* ===========================
-     UNLOCK WALLET
-  =========================== */
-  async function unlockWallet(password: string): Promise<boolean> {
+  /* ================= UNLOCK ================= */
+  async function unlockWallet(password: string) {
+    if (!storageKey) return false
+
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = localStorage.getItem(storageKey)
       if (!raw) return false
 
-      const parsed = JSON.parse(raw)
-      const iv = new Uint8Array(parsed.iv)
-      const data = new Uint8Array(parsed.data)
+      const data = new Uint8Array(JSON.parse(raw))
+      const iv = data.slice(0, 12)
+      const encrypted = data.slice(12)
 
       const key = await crypto.subtle.importKey(
         "raw",
@@ -169,16 +131,12 @@ export function WalletProvider({
       const decrypted = await crypto.subtle.decrypt(
         { name: "AES-GCM", iv },
         key,
-        data
+        encrypted
       )
 
-      const walletData = JSON.parse(
-        new TextDecoder().decode(decrypted)
-      )
-
-      setWallet(walletData)
+      const parsed = JSON.parse(new TextDecoder().decode(decrypted))
+      setWallet(parsed)
       setIsLocked(false)
-
       await refreshBalance()
       return true
     } catch {
@@ -186,9 +144,13 @@ export function WalletProvider({
     }
   }
 
-  /* ===========================
-     SEND ETH
-  =========================== */
+  function lockWallet() {
+    setWallet(null)
+    setIsLocked(true)
+    setBalance("0.00")
+  }
+
+  /* ================= TX ================= */
   async function sendTransaction(to: string, amountEth: string) {
     const signer = getSigner()
     const tx = await signer.sendTransaction({
@@ -200,85 +162,42 @@ export function WalletProvider({
     return tx.hash
   }
 
-  /* ===========================
-     TOKEN BALANCE
-  =========================== */
-  async function getTokenBalance(
-    tokenAddress: string
-  ): Promise<TokenBalance> {
+  async function getTokenBalance(tokenAddress: string): Promise<TokenBalance> {
     if (!wallet) throw new Error("Wallet locked")
 
-    const token = new ethers.Contract(
-      tokenAddress,
-      ERC20_ABI,
-      provider
-    )
-
+    const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
     const [raw, decimals, symbol] = await Promise.all([
       token.balanceOf(wallet.address),
       token.decimals(),
       token.symbol(),
     ])
 
-    return {
-      symbol,
-      balance: ethers.formatUnits(raw, decimals),
-    }
+    return { symbol, balance: ethers.formatUnits(raw, decimals) }
   }
 
-  /* ===========================
-     SEND TOKEN
-  =========================== */
-  async function sendToken(
-    token: string,
-    to: string,
-    amount: string
-  ) {
+  async function sendToken(tokenAddress: string, to: string, amount: string) {
     const signer = getSigner()
-    const contract = new ethers.Contract(
-      token,
-      ERC20_ABI,
-      signer
-    )
+    const token = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
+    const decimals = await token.decimals()
 
-    const decimals = await contract.decimals()
-    const tx = await contract.transfer(
+    const tx = await token.transfer(
       to,
       ethers.parseUnits(amount, decimals)
     )
-
     await tx.wait()
     return tx.hash
-  }
-
-  /* ===========================
-     LOCK / RESET
-  =========================== */
-  function lockWallet() {
-    setWallet(null)
-    setIsLocked(true)
-    setBalance("0.00")
-  }
-
-  function resetWallet() {
-    localStorage.removeItem(STORAGE_KEY)
-    setWallet(null)
-    setHasWallet(false)
-    setIsLocked(false)
-    setBalance("0.00")
   }
 
   return (
     <WalletContext.Provider
       value={{
         wallet,
-        hasWallet,
         isLocked,
         balance,
+        hasWallet,
         createWallet,
         unlockWallet,
         lockWallet,
-        resetWallet,
         refreshBalance,
         sendTransaction,
         getTokenBalance,
@@ -292,10 +211,7 @@ export function WalletProvider({
 
 export function useVegaWallet() {
   const ctx = useContext(WalletContext)
-  if (!ctx)
-    throw new Error(
-      "useVegaWallet must be used inside WalletProvider"
-    )
+  if (!ctx) throw new Error("useVegaWallet must be used inside WalletProvider")
   return ctx
 }
 
