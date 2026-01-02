@@ -18,7 +18,7 @@ export default function ProfilePage() {
   const [sent, setSent] = useState(false)
 
   const [username, setUsername] = useState("")
-  const [avatar, setAvatar] = useState<string>("")
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   /* ================= LOAD PROFILE ================= */
@@ -30,10 +30,11 @@ export default function ProfilePage() {
       .select("username, avatar_url")
       .eq("id", user.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) return
         if (data) {
           setUsername(data.username ?? "")
-          setAvatar(data.avatar_url?? "")
+          setAvatarUrl(data.avatar_url ?? null)
         }
       })
   }, [user])
@@ -46,7 +47,7 @@ export default function ProfilePage() {
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       username,
-      avatar,
+      avatar_url: avatarUrl,
       updated_at: new Date().toISOString(),
     })
 
@@ -81,11 +82,11 @@ export default function ProfilePage() {
       .from("avatars")
       .getPublicUrl(filePath)
 
-    setAvatar(data.publicUrl)
+    setAvatarUrl(data.publicUrl)
 
     await supabase.from("profiles").upsert({
       id: user.id,
-      avatar: data.publicUrl,
+      avatar_url: data.publicUrl,
     })
   }
 
@@ -102,7 +103,7 @@ export default function ProfilePage() {
             <div className="relative">
               <img
                 src={
-                  avatar ||
+                  avatarUrl ||
                   `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`
                 }
                 className="w-20 h-20 rounded-full border border-blue-900/30 object-cover"
@@ -134,8 +135,8 @@ export default function ProfilePage() {
 
           <label className="text-sm text-blue-400">Avatar URL</label>
           <input
-            value={avatar}
-            onChange={e => setAvatar(e.target.value)}
+            value={avatarUrl ?? ""}
+            onChange={e => setAvatarUrl(e.target.value)}
             className="w-full bg-black border border-blue-900/30 px-3 py-2 rounded"
           />
 
